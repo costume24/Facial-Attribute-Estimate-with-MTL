@@ -1,0 +1,10 @@
+{
+    "python.formatting.provider": "yapf",
+    "python.pythonPath": "/home/xuke/anaconda4.3/envs/tf/bin/python",
+    "python.linting.pylintArgs": [
+        "--extension-pkg-whitelist=numpy",
+        "--generate-members"
+    ],
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
+}

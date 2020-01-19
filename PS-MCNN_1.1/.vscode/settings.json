@@ -1,0 +1,5 @@
+{
+    "python.pythonPath": "/home/xuke/anaconda4.3/envs/py/bin/python",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
+}
