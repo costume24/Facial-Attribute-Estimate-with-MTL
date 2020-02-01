@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from prefetch_generator import BackgroundGenerator
+# from prefetch_generator import BackgroundGenerator
 import torch
 import torch.utils.data as data
 
@@ -16,6 +16,7 @@ def default_loader(path):
 
 class CelebA(data.Dataset):
     def __init__(self, root, ann_file, id_file, type, transform=None, target_transform=None, loader=default_loader):
+        pp='/root/OneDrive/DataSets/CelebA/Img/img_align_celeba/'
         images = []
         targets = []
         id_targets = []
@@ -36,7 +37,8 @@ class CelebA(data.Dataset):
             sample = line.split()[1]
             id_targets.append(int(sample))
 
-        self.images = [os.path.join(root, type, img) for img in images]
+        # self.images = [os.path.join(root, type, img) for img in images]
+        self.images = [os.path.join(pp, img) for img in images]
         self.targets = targets
         self.id_targets = id_targets
         self.transform = transform
