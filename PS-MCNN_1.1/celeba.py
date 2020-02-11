@@ -15,16 +15,23 @@ def default_loader(path):
 
 
 class CelebA(data.Dataset):
-    def __init__(self, root, ann_file, id_file, type, transform=None, target_transform=None, loader=default_loader):
-        pp='/root/OneDrive/DataSets/CelebA/Img/img_align_celeba/'
+    def __init__(self,
+                 root,
+                 ann_file,
+                 id_file,
+                 transform=None,
+                 target_transform=None,
+                 loader=default_loader):
+        # pp='/root/OneDrive/DataSets/CelebA/Img/img_align_celeba/'
         images = []
         targets = []
         id_targets = []
         attr_order = [
-            1, 3, 4, 5, 8, 9, 11, 12, 15, 17, 23, 28, 35, 7, 19, 27, 29, 30, 34, 6, 14, 16, 22, 21, 24, 36, 37, 38, 0,
-            2, 10, 13, 18, 20, 25, 26, 32, 31, 33, 39
+            1, 3, 4, 5, 8, 9, 11, 12, 15, 17, 23, 28, 35, 7, 19, 27, 29, 30,
+            34, 6, 14, 16, 22, 21, 24, 36, 37, 38, 0, 2, 10, 13, 18, 20, 25,
+            26, 32, 31, 33, 39
         ]
-        for line in open(os.path.join(root, ann_file), 'r'):
+        for line in open(os.path.join(root, 'Anno', ann_file), 'r'):
             sample = line.split()
             images.append(sample[0])
             tmp = [int(i == '1') for i in sample[1:]]
@@ -33,12 +40,15 @@ class CelebA(data.Dataset):
             tmp = tmp[attr_order]
             targets.append(tmp)
 
-        for line in open(os.path.join(root, id_file), 'r'):
+        for line in open(os.path.join(root, 'Anno', id_file), 'r'):
             sample = line.split()[1]
-            id_targets.append(int(sample))
+            id_targets.append([int(sample)])
 
         # self.images = [os.path.join(root, type, img) for img in images]
-        self.images = [os.path.join(pp, img) for img in images]
+        self.images = [
+            os.path.join(root, 'Img', 'img_align_celeba', img)
+            for img in images
+        ]
         self.targets = targets
         self.id_targets = id_targets
         self.transform = transform
@@ -60,7 +70,7 @@ class CelebA(data.Dataset):
         if self.target_transform is not None:
             target = self.target_transform(target)
 
-        return sample, target
+        return sample, target, id_target
 
     def __len__(self):
         return len(self.images)
@@ -73,7 +83,9 @@ class TensorSampler(data.Sampler):
         self.batch_size = batch_size
 
     def __iter__(self):
-        return iter(torch.randperm(len(self.data_source)).long().split(self.batch_size))
+        return iter(
+            torch.randperm(len(self.data_source)).long().split(
+                self.batch_size))
 
 
 class data_prefetcher():
