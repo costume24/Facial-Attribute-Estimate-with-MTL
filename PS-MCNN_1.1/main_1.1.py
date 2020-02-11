@@ -180,7 +180,7 @@ def main():
     elif args.place == 'kb541':
         data_path = ''
     elif args.place == 'phd-1':
-        data_path = ''
+        data_path = '/media/kb541/data/xuke/CelebA/'
     # model.apply(weight_init)
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda()
@@ -542,8 +542,8 @@ def validate(val_loader, model, criterion, writer, count):
             # worst_acc_id = torch.argmin(correct_single)
             # worst_attr = label_list[worst_acc_id]
             # worst_acc = correct_single[worst_acc_id]
-            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.5f} | '\
-                'top1: {top1: .4f}'.format(
+            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
+                'top1: {top1: .5f}'.format(
                 batch=i + 1,
                 size=len(val_loader),
                 data=data_time.avg,
