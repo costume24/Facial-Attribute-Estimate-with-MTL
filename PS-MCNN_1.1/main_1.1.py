@@ -281,6 +281,8 @@ def main():
     count_val = 0
     each_train_best = [0] * 40
     each_val_best = [0] * 40
+    each_train = torch.zeros(40, device='cuda:0')
+    each_val = torch.zeros(40, device='cuda:0')
     best_train = {}
     best_val = {}
     for epoch in range(args.start_epoch, args.epochs):
@@ -291,22 +293,22 @@ def main():
         # train for one epoch
         train_loss, train_acc, each_train, count_train = train(
             train_loader, model, criterion, optimizer, epoch, writer,
-            count_train)
+            count_train, each_train)
 
         # evaluate on validation set
         val_loss, prec1, each_val, count_val = validate(
-            val_loader, model, criterion, writer, count_val)
+            val_loader, model, criterion, writer, count_val, each_val)
 
         # append logger file
         logger.append([lr, train_loss, val_loss, train_acc, prec1])
 
-        for i in range(40):
-            each_train_best[i] = each_train_best[
-                i] if each_train_best[i] > each_train[i] else each_train[i]
-            each_val_best[i] = each_val_best[
-                i] if each_val_best[i] > each_val[i] else each_val[i]
-            best_train[label_list[i]] = each_train_best[i]
-            best_val[label_list[i]] = each_val_best[i]
+        # for i in range(40):
+        #     each_train_best[i] = each_train_best[
+        #         i] if each_train_best[i] > each_train[i] else each_train[i]
+        #     each_val_best[i] = each_val_best[
+        #         i] if each_val_best[i] > each_val[i] else each_val[i]
+        #     best_train[label_list[i]] = each_train_best[i]
+        #     best_val[label_list[i]] = each_val_best[i]
         # tensorboardX
         writer.add_scalar('learning_rate', lr, epoch + 1)
         writer.add_scalars('each_train', best_train, epoch + 1)
@@ -333,11 +335,12 @@ def main():
     print('Best accuracy:')
     print(best_prec1)
     print('Best accuracy of each attribute:')
-    for i in range(40):
-        print(label_list[i], ':', best_val[i], end=' === ')
+    for key, item in each_val.items():
+        print(key, ':', item, end='   ===   ')
 
 
-def train(train_loader, model, criterion, optimizer, epoch, writer, count):
+def train(train_loader, model, criterion, optimizer, epoch, writer, count,
+          each_total):
     bar = Bar('Training', max=len(train_loader))
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -348,7 +351,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     train_total = 0.0
     train_correct = 0.0
     # count = 0
-    each_total = torch.zeros(40, device='cuda:0')
     weight = [1] * 40
     stage = 1
     if epoch >= 10:
@@ -413,7 +415,10 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
             pred == target, 0, dtype=torch.float32) / output.size(0)  # (?,40)
 
         # 所有属性的平均准确率
-        each_total = (each_total + correct_single) / (i + 1)
+        if i == 0:
+            each_total = correct_single
+        else:
+            each_total = (each_total + correct_single) / 2
 
         train_correct += torch.sum(
             pred == target,
@@ -466,7 +471,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     return (loss_avg, cls_train_Accuracy, each_total, count)
 
 
-def validate(val_loader, model, criterion, writer, count):
+def validate(val_loader, model, criterion, writer, count, each_total):
     bar = Bar('Validating', max=len(val_loader))
 
     batch_time = AverageMeter()
@@ -479,7 +484,6 @@ def validate(val_loader, model, criterion, writer, count):
         end = time.time()
         val_total = 0.0
         val_correct = 0.0
-        each_total = torch.zeros(40, device='cuda:0')
         for i, (input, target, id_target) in enumerate(val_loader):
             # measure data loading time
             data_time.update(time.time() - end)
@@ -517,7 +521,10 @@ def validate(val_loader, model, criterion, writer, count):
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
             # 所有属性的平均准确率
-            each_total = (each_total + correct_single) / (i + 1)
+            if i == 0:
+                each_total = correct_single
+            else:
+                each_total = (each_total + correct_single) / 2
 
             val_correct += torch.sum(pred == target, dtype=torch.float32).item(
             ) / 40.0  # num_classes need you to define
@@ -534,6 +541,7 @@ def validate(val_loader, model, criterion, writer, count):
                 acc_dic[label_list[ii]] = correct_single[ii]
             writer.add_scalars('loss', {'validate_loss': loss_avg}, count)
             writer.add_scalars('acc_val', acc_dic, count)
+            count += 1
             # plot progress
             # best_acc_id = torch.argmax(correct_single)
             # best_attr = label_list[best_acc_id]
