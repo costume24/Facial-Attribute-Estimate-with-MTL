@@ -50,7 +50,7 @@ class psnet(nn.Module):
             nn.Linear(1024, 24)
         ])
 
-        self.se_list = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384), SELayer(512)])  # (5,), 仅在s支路上加入se模块
+        self.se_list = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384), SELayer(256)])  # (5,), 仅在s支路上加入se模块
             
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         

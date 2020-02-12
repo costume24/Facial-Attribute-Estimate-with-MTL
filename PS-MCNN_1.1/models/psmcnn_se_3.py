@@ -54,7 +54,7 @@ class psnet(nn.Module):
         for _ in range(4):
             tmp = nn.ModuleList([SELayer(192), SELayer(256), SELayer(384), SELayer(640), SELayer(384)])
             self.se_list.append(tmp)
-        self.se_list_s = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384), SELayer(512)])  # (5,), 仅在s支路上加入se模块
+        self.se_list_s = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384), SELayer(256)])  # (5,), 仅在s支路上加入se模块
 
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         
