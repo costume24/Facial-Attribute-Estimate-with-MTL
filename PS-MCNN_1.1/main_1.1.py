@@ -50,16 +50,16 @@ parser.add_argument('--start-epoch',
                     type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--train-batch',
-                    default=64,
+                    default=32,
                     type=int,
                     help='train batchsize (default: 256)')
 parser.add_argument('--test-batch',
-                    default=64,
+                    default=32,
                     type=int,
                     help='test batchsize (default: 200)')
 parser.add_argument('--lr',
                     '--learning-rate',
-                    default=1e-4,
+                    default=5e-4,
                     type=float,
                     help='initial learning rate')
 parser.add_argument('--lr-decay',
@@ -73,7 +73,7 @@ parser.add_argument('--step',
 parser.add_argument('--schedule',
                     type=int,
                     nargs='+',
-                    default=[150, 225],
+                    default=[15, 25],
                     help='decrease learning rate at these epochs.')
 parser.add_argument('--turning-point',
                     type=int,
@@ -595,6 +595,12 @@ def adjust_learning_rate(optimizer, epoch):
     elif args.lr_decay == 'schedule':
         if epoch in args.schedule:
             lr *= args.gamma
+    elif args.lr_decay=='warmup':
+        if epoch<5:
+            lr=1e-5
+        else:
+            if epoch in args.schedule:
+                lr *= args.gamma            
     else:
         raise ValueError('Unknown lr mode {}'.format(args.lr_decay))
 
