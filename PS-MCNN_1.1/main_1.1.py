@@ -59,7 +59,7 @@ parser.add_argument('--test-batch',
                     help='test batchsize (default: 200)')
 parser.add_argument('--lr',
                     '--learning-rate',
-                    default=5e-4,
+                    default=1e-3,
                     type=float,
                     help='initial learning rate')
 parser.add_argument('--lr-decay',
@@ -603,9 +603,14 @@ def adjust_learning_rate(optimizer, epoch):
                 lr *= args.gamma            
     else:
         raise ValueError('Unknown lr mode {}'.format(args.lr_decay))
+    
+    if epoch==5:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = args.lr
+    else:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
 
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
     return lr
 
 
