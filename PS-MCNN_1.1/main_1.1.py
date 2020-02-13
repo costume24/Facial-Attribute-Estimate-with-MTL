@@ -59,7 +59,7 @@ parser.add_argument('--test-batch',
                     help='test batchsize (default: 200)')
 parser.add_argument('--lr',
                     '--learning-rate',
-                    default=1e-3,
+                    default=1e-2,
                     type=float,
                     help='initial learning rate')
 parser.add_argument('--lr-decay',
@@ -73,7 +73,7 @@ parser.add_argument('--step',
 parser.add_argument('--schedule',
                     type=int,
                     nargs='+',
-                    default=[15, 25],
+                    default=[12, 22],
                     help='decrease learning rate at these epochs.')
 parser.add_argument('--turning-point',
                     type=int,
@@ -279,12 +279,12 @@ def main():
     writer = SummaryWriter(os.path.join(args.checkpoint, 'logs'))
     count_train = 0
     count_val = 0
-    each_train_best = [0] * 40
-    each_val_best = [0] * 40
+    # each_train_best = [0] * 40
+    # each_val_best = [0] * 40
     each_train = torch.zeros(40, device='cuda:0')
     each_val = torch.zeros(40, device='cuda:0')
-    best_train = {}
-    best_val = {}
+    # best_train = {}
+    # best_val = {}
     for epoch in range(args.start_epoch, args.epochs):
         lr = adjust_learning_rate(optimizer, epoch)
 
@@ -311,8 +311,8 @@ def main():
         #     best_val[label_list[i]] = each_val_best[i]
         # tensorboardX
         writer.add_scalar('learning_rate', lr, epoch + 1)
-        writer.add_scalars('each_train', best_train, epoch + 1)
-        writer.add_scalars('each_val', best_val, epoch + 1)
+        # writer.add_scalars('each_train', best_train, epoch + 1)
+        # writer.add_scalars('each_val', best_val, epoch + 1)
         is_best = prec1 > best_prec1
         best_prec1 = max(prec1, best_prec1)
         save_checkpoint(
@@ -335,8 +335,8 @@ def main():
     print('Best accuracy:')
     print(best_prec1)
     print('Best accuracy of each attribute:')
-    for key, item in each_val.items():
-        print(key, ':', item, end='   ===   ')
+    for i in range(40):
+        print(label_list[i], ':', each_val[i].item(), end='   ===   ')
 
 
 def train(train_loader, model, criterion, optimizer, epoch, writer, count,
@@ -596,7 +596,7 @@ def adjust_learning_rate(optimizer, epoch):
         if epoch in args.schedule:
             lr *= args.gamma
     elif args.lr_decay=='warmup':
-        if epoch<5:
+        if epoch<3:
             lr=1e-5
         else:
             if epoch in args.schedule:
@@ -604,7 +604,7 @@ def adjust_learning_rate(optimizer, epoch):
     else:
         raise ValueError('Unknown lr mode {}'.format(args.lr_decay))
     
-    if epoch==5:
+    if epoch==2:
         for param_group in optimizer.param_groups:
             param_group['lr'] = args.lr
     else:
