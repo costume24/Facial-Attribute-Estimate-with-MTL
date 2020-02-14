@@ -483,7 +483,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         )
         bar.next()
         # 统计每个属性的**平均**准确率
-        balance = ((tp/Np) + (tn/Nn)) * 0.5
+        balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
         b_acc_dic = {}
         for ii in range(40):
             b_acc_dic[label_list[ii]] = balance[ii]
@@ -606,7 +606,7 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             bar.next()
     bar.finish()
     # 统计每个属性的**平均**准确率
-    balance = ((tp/Np) + (tn/Nn)) * 0.5
+    balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
     b_acc_dic = {}
     for ii in range(40):
         b_acc_dic[label_list[ii]] = balance[ii]
