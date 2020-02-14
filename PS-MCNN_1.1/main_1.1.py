@@ -420,7 +420,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
 
         # 计算平衡准确率
         for iii in range(40):
-            Np[iii] = sum([1 for xx in target[:,i] if xx == 1])
+            Np[iii] = sum([1 for xx in target[:,iii] if xx == 1])
             Nn[iii] = target.size(0)-Np[iii]
 
             for jjj in range(pred.size(0)):
@@ -551,7 +551,7 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
             # 计算平衡准确率
             for iii in range(40):
-                Np[iii] = sum([1 for xx in target[:,i] if xx == 1])
+                Np[iii] = sum([1 for xx in target[:,iii] if xx == 1])
                 Nn[iii] = target.size(0)-Np[iii]
 
                 for jjj in range(pred.size(0)):
