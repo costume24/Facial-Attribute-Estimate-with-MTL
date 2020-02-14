@@ -352,9 +352,9 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
     train_correct = 0.0
     # 计算平衡准确率
     tp = [0] * 40
-    Np = [0] * 40.0
+    Np = [0] * 40
     tn = [0] * 40
-    Nn = [0] * 40.0
+    Nn = [0] * 40
     balance = [0] * 40
     # count = 0
     weight = [1] * 40
@@ -505,9 +505,9 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
     model.eval()
     # 计算平衡准确率
     tp = [0] * 40
-    Np = [0] * 40.0
+    Np = [0] * 40
     tn = [0] * 40
-    Nn = [0] * 40.0
+    Nn = [0] * 40
     balance = [0] * 40
     with torch.no_grad():
         end = time.time()
