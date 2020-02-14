@@ -350,6 +350,12 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
     end = time.time()
     train_total = 0.0
     train_correct = 0.0
+    # 计算平衡准确率
+    tp = [0] * 40
+    Np = [0] * 40.0
+    tn = [0] * 40
+    Nn = [0] * 40.0
+    balance = [0] * 40
     # count = 0
     weight = [1] * 40
     stage = 1
@@ -410,9 +416,21 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             weight[ii] = math.exp(
                 (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
 
+        compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
+
+        # 计算平衡准确率
+        for iii in range(40):
+            Np[iii] = torch.sum([1 for xx in target[:,i] if xx == 1])
+            Nn[iii] = target.size(0).item()-Np[iii]
+
+            for jjj in range(pred.size(0)):
+                if pred[jjj,iii] == target[jjj,iii] == 1:
+                    tp[iii] += 1
+                elif pred[jjj,iii] == target[jjj,iii] == 0:
+                    tn[iii] += 1
+        
         # 每个属性在当前batch的准确率
-        correct_single = torch.sum(
-            pred == target, 0, dtype=torch.float32) / output.size(0)  # (?,40)
+        correct_single = compare_result / output.size(0)  # (?,40)
 
         # 所有属性的平均准确率
         if i == 0:
@@ -464,10 +482,16 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             top1=cls_train_Accuracy
         )
         bar.next()
-
+        # 统计每个属性的**平均**准确率
+        balance = ((tp/Np) + (tn/Nn)) * 0.5
+        b_acc_dic = {}
+        for ii in range(40):
+            b_acc_dic[label_list[ii]] = balance[ii]
+        writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
     # i += 1
     # input, target = prefetcher.next()
     bar.finish()
+
     return (loss_avg, cls_train_Accuracy, each_total, count)
 
 
@@ -479,7 +503,12 @@ def validate(val_loader, model, criterion, writer, count, each_total):
 
     # switch to evaluate mode
     model.eval()
-
+    # 计算平衡准确率
+    tp = [0] * 40
+    Np = [0] * 40.0
+    tn = [0] * 40
+    Nn = [0] * 40.0
+    balance = [0] * 40
     with torch.no_grad():
         end = time.time()
         val_total = 0.0
@@ -518,6 +547,19 @@ def validate(val_loader, model, criterion, writer, count, each_total):
             loss += lc_loss
             loss = loss.requires_grad_()
             _, pred = torch.max(output, 1)
+
+            compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
+            # 计算平衡准确率
+            for iii in range(40):
+                Np[iii] = torch.sum([1 for xx in target[:,i] if xx == 1])
+                Nn[iii] = target.size(0).item()-Np[iii]
+
+                for jjj in range(pred.size(0)):
+                    if pred[jjj,iii] == target[jjj,iii] == 1:
+                        tp[iii] += 1
+                    elif pred[jjj,iii] == target[jjj,iii] == 0:
+                        tn[iii] += 1
+
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
             # 所有属性的平均准确率
@@ -563,6 +605,13 @@ def validate(val_loader, model, criterion, writer, count, each_total):
             )
             bar.next()
     bar.finish()
+    # 统计每个属性的**平均**准确率
+    balance = ((tp/Np) + (tn/Nn)) * 0.5
+    b_acc_dic = {}
+    for ii in range(40):
+        b_acc_dic[label_list[ii]] = balance[ii]
+    writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
+
     return (loss_avg, cls_val_Accuracy, each_total, count)
 
 
