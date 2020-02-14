@@ -482,15 +482,15 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             top1=cls_train_Accuracy
         )
         bar.next()
-        # 统计每个属性的**平均**准确率
-        balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
-        b_acc_dic = {}
-        for ii in range(40):
-            b_acc_dic[label_list[ii]] = balance[ii]
-        writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
     # i += 1
     # input, target = prefetcher.next()
     bar.finish()
+    # 统计每个属性的**平均**准确率
+    balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
+    b_acc_dic = {}
+    for ii in range(40):
+        b_acc_dic[label_list[ii]] = balance[ii]
+    writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
 
     return (loss_avg, cls_train_Accuracy, each_total, count)
 
