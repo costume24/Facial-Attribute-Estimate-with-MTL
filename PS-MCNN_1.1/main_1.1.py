@@ -421,7 +421,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         # 计算平衡准确率
         for iii in range(40):
             Np[iii] = sum([1 for xx in target[:,i] if xx == 1])
-            Nn[iii] = target.size(0).item()-Np[iii]
+            Nn[iii] = target.size(0)-Np[iii]
 
             for jjj in range(pred.size(0)):
                 if pred[jjj,iii] == target[jjj,iii] == 1:
@@ -552,7 +552,7 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             # 计算平衡准确率
             for iii in range(40):
                 Np[iii] = sum([1 for xx in target[:,i] if xx == 1])
-                Nn[iii] = target.size(0).item()-Np[iii]
+                Nn[iii] = target.size(0)-Np[iii]
 
                 for jjj in range(pred.size(0)):
                     if pred[jjj,iii] == target[jjj,iii] == 1:
