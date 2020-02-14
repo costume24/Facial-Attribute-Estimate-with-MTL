@@ -297,7 +297,7 @@ def main():
 
         # evaluate on validation set
         val_loss, prec1, each_val, count_val = validate(
-            val_loader, model, criterion, writer, count_val, each_val)
+            val_loader, model, criterion, writer, count_val, each_val, epoch)
 
         # append logger file
         logger.append([lr, train_loss, val_loss, train_acc, prec1])
@@ -495,7 +495,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
     return (loss_avg, cls_train_Accuracy, each_total, count)
 
 
-def validate(val_loader, model, criterion, writer, count, each_total):
+def validate(val_loader, model, criterion, writer, count, each_total, epoch):
     bar = Bar('Validating', max=len(val_loader))
 
     batch_time = AverageMeter()
