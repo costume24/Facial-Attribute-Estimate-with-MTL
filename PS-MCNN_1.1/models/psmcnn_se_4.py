@@ -170,7 +170,7 @@ class SE_and_1x1(nn.Module):
     def __init__(self, channel, oup=32, reduction=16):
         super(SE_and_1x1, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.conv_1x1 = nn.Conv2d(channel, oup, 1, 1, 1, bias=False)
+        self.conv_1x1 = nn.Conv2d(channel, oup, 1, 1, 0, bias=False)
         self.fc = nn.Sequential(
             nn.Linear(channel, int(channel / reduction), bias=False),
             nn.ReLU(inplace=True),
