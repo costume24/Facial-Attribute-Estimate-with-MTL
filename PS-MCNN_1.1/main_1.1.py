@@ -180,7 +180,7 @@ def main():
     elif args.place == 'my':
         data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/CelebA/'
     elif args.place == 'kb541':
-        data_path = ''
+        data_path = '/media/E/xuke/CelebA/'
     elif args.place == 'phd-1':
         data_path = '/media/kb541/data/xuke/CelebA/'
     # model.apply(weight_init)
