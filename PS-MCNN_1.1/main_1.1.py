@@ -551,8 +551,8 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
             # 计算平衡准确率
             for iii in range(40):
-                Np[iii] = sum([1 for xx in target[:,iii] if xx == 1])
-                Nn[iii] = target.size(0)-Np[iii]
+                Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
+                Nn[iii] += target.size(0)-Np[iii]
 
                 for jjj in range(pred.size(0)):
                     if pred[jjj,iii] == target[jjj,iii] == 1:
@@ -645,20 +645,18 @@ def adjust_learning_rate(optimizer, epoch):
         if epoch in args.schedule:
             lr *= args.gamma
     elif args.lr_decay=='warmup':
-        if epoch<3:
+        if epoch<2:
             lr=1e-5
-        else:
-            if epoch in args.schedule:
-                lr *= args.gamma            
+        elif epoch == 2:
+            lr=args.lr
+        if epoch in args.schedule:
+            lr *= args.gamma            
     else:
         raise ValueError('Unknown lr mode {}'.format(args.lr_decay))
     
-    if epoch==2:
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = args.lr
-    else:
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
+
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
 
     return lr
 
