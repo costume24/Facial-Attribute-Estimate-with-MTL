@@ -169,8 +169,10 @@ def main():
         model = models.psmcnn_se_1.psnet().to(device)
     elif args.version == 2:
         model = models.psmcnn_se_2.psnet().to(device)
-    else:
+    elif args.version == 3:
         model = models.psmcnn_se_3.psnet().to(device)
+    elif args.version == 4:
+        model = models.psmcnn_se_4.psnet().to(device)
 
     data_path = ''
     if args.place == 'deepai':

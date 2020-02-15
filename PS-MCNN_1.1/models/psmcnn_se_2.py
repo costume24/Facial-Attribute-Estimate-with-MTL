@@ -23,21 +23,21 @@ class psnet(nn.Module):
             conv_3x3_bn(384, 128)
         ])  # (5,),s支路的5个卷积层
         self.t_fc = nn.ModuleList()  # (4,2)，每一行是一个t支路的2个FC层
-        self.s_fc = nn.ModuleList([nn.Linear(7680, 512),
+        self.s_fc = nn.ModuleList([nn.Linear(3840, 512),
                                    nn.Linear(512, 512)])  # (2,)，s支路的2个FC层
         self.output = []  # (4,), 4个支路的输出
         for _ in range(4):
             tmp = nn.ModuleList([
                 conv_3x3_bn(3, 32),
-                conv_3x3_bn(192, 64),
-                conv_3x3_bn(256, 128),
-                conv_3x3_bn(384, 256),
-                conv_3x3_bn(640, 128)
+                conv_3x3_bn(64, 64),
+                conv_3x3_bn(128, 128),
+                conv_3x3_bn(256, 256),
+                conv_3x3_bn(512, 128)
             ])
             self.t_conv.append(tmp)
 
         for _ in range(4):
-            tmp = nn.ModuleList([nn.Linear(11520, 512), nn.Linear(512, 512)])
+            tmp = nn.ModuleList([nn.Linear(3840, 512), nn.Linear(512, 512)])
             self.t_fc.append(tmp)
 
         # 这里的四个分支的输出维度由手工分组决定
@@ -50,7 +50,7 @@ class psnet(nn.Module):
             nn.Linear(1024, 24)
         ])
 
-        self.se_list = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384), SELayer(256)])  # (5,), 仅在s支路上加入se模块
+        self.se_list = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384)])  # (5,), 仅在s支路上加入se模块
             
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         
@@ -70,7 +70,6 @@ class psnet(nn.Module):
         s_4=self.se_list[3](s_4)
 
         block_5, s_5 = self.block(block_4, s_4, 4)
-        s_5=self.se_list[4](s_5)
         
         for i in range(4):
             _size = block_5[i].size()
@@ -109,21 +108,23 @@ class psnet(nn.Module):
         t_2 = self.pool(t_2)
         t_3 = self.pool(t_3)
 
-        indices = torch.arange(0, 32, 1).cuda()
-        t_0_partial = torch.index_select(t_0, 1, indices).cuda()
-        t_1_partial = torch.index_select(t_1, 1, indices).cuda()
-        t_2_partial = torch.index_select(t_2, 1, indices).cuda()
-        t_3_partial = torch.index_select(t_3, 1, indices).cuda()
         s_0 = self.s_conv[ind](s_0)
         s_0 = self.pool(s_0)
-        s_0 = torch.cat(
-            [t_0_partial, t_1_partial, t_2_partial, t_3_partial, s_0], 1)
+        
+        if ind<4:
+            indices = torch.arange(0, 32, 1).cuda()
+            t_0_partial = torch.index_select(t_0, 1, indices).cuda()
+            t_1_partial = torch.index_select(t_1, 1, indices).cuda()
+            t_2_partial = torch.index_select(t_2, 1, indices).cuda()
+            t_3_partial = torch.index_select(t_3, 1, indices).cuda()
+            s_0 = torch.cat(
+                [t_0_partial, t_1_partial, t_2_partial, t_3_partial, s_0], 1)
 
-        t_0 = torch.cat([t_0, s_0], 1)
-        t_1 = torch.cat([t_1, s_0], 1)
-        t_2 = torch.cat([t_2, s_0], 1)
-        t_3 = torch.cat([t_3, s_0], 1)
-
+            t_0 = torch.cat([t_0, s_0], 1)
+            t_1 = torch.cat([t_1, s_0], 1)
+            t_2 = torch.cat([t_2, s_0], 1)
+            t_3 = torch.cat([t_3, s_0], 1)
+            
         return [t_0, t_1, t_2, t_3], s_0
 
 class SELayer(nn.Module):
