@@ -494,7 +494,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         b_acc_dic[label_list[ii]] = balance[ii]
     b_acc_dic['Ave.']=torch.mean(balance).item()
     writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
-    print('Averaged balanced Accuracy (validating): ',b_acc_dic['Ave.'])
+    print('Averaged balanced Accuracy (training): ',b_acc_dic['Ave.'])
 
     return (loss_avg, cls_train_Accuracy, each_total, count)
 
