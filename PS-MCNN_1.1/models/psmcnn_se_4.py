@@ -52,39 +52,51 @@ class psnet(nn.Module):
 
         self.se_list = nn.ModuleList()  # (4,5), 仅在t支路上加入se模块
         for _ in range(4):
-            tmp = nn.ModuleList([SELayer(192), SELayer(256), SELayer(384), SELayer(640), SELayer(384)])
+            tmp = nn.ModuleList([
+                SELayer(192),
+                SELayer(256),
+                SELayer(384),
+                SELayer(640),
+                SELayer(384)
+            ])
             self.se_list.append(tmp)
-        self.se_list_s = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384), SELayer(256)])  # (5,), 仅在s支路上加入se模块
+        self.se_list_s = nn.ModuleList([
+            SELayer(160),
+            SELayer(192),
+            SELayer(256),
+            SELayer(384),
+            SELayer(256)
+        ])  # (5,), 仅在s支路上加入se模块
 
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        
+
     def forward(self, input):
         # print('input size ', input.size())
         self.output = []
         block_1, s_1 = self.block([input, input, input, input], input, 0)
         for i in range(4):
             block_1[i] = self.se_list[i][0](block_1[i])
-        s_1=self.se_list_s[0](s_1)
+        s_1 = self.se_list_s[0](s_1)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
         for i in range(4):
             block_2[i] = self.se_list[i][1](block_2[i])
-        s_2=self.se_list_s[1](s_2)
+        s_2 = self.se_list_s[1](s_2)
 
         block_3, s_3 = self.block(block_2, s_2, 2)
         for i in range(4):
             block_3[i] = self.se_list[i][2](block_3[i])
-        s_3=self.se_list_s[2](s_3)
+        s_3 = self.se_list_s[2](s_3)
 
         block_4, s_4 = self.block(block_3, s_3, 3)
         for i in range(4):
             block_4[i] = self.se_list[i][3](block_4[i])
-        s_4=self.se_list_s[3](s_4)
+        s_4 = self.se_list_s[3](s_4)
 
         block_5, s_5 = self.block(block_4, s_4, 4)
         for i in range(4):
             block_5[i] = self.se_list[i][4](block_5[i])
-        s_5=self.se_list_s[4](s_5)
+        s_5 = self.se_list_s[4](s_5)
 
         for i in range(4):
             _size = block_5[i].size()
@@ -125,8 +137,13 @@ class psnet(nn.Module):
 
         s_0 = self.s_conv[ind](s_0)
         s_0 = self.pool(s_0)
-        
-        if ind<4:
+
+        if ind < 4:
+            t_0 = torch.cat([t_0, s_0], 1)
+            t_1 = torch.cat([t_1, s_0], 1)
+            t_2 = torch.cat([t_2, s_0], 1)
+            t_3 = torch.cat([t_3, s_0], 1)
+
             indices = torch.arange(0, 32, 1).cuda()
             t_0_partial = torch.index_select(t_0, 1, indices).cuda()
             t_1_partial = torch.index_select(t_1, 1, indices).cuda()
@@ -135,12 +152,8 @@ class psnet(nn.Module):
             s_0 = torch.cat(
                 [t_0_partial, t_1_partial, t_2_partial, t_3_partial, s_0], 1)
 
-            t_0 = torch.cat([t_0, s_0], 1)
-            t_1 = torch.cat([t_1, s_0], 1)
-            t_2 = torch.cat([t_2, s_0], 1)
-            t_3 = torch.cat([t_3, s_0], 1)
-            
         return [t_0, t_1, t_2, t_3], s_0
+
 
 class SELayer(nn.Module):
     def __init__(self, channel, reduction=16):
@@ -150,8 +163,8 @@ class SELayer(nn.Module):
             nn.Linear(channel, int(channel / reduction), bias=False),
             nn.ReLU(inplace=True),
             nn.Linear(int(channel / reduction), channel, bias=False),
-            nn.Sigmoid()
-        )
+            nn.Sigmoid())
+
     def forward(self, x):
         b, c, _, _ = x.size()
         y = self.avg_pool(x).view(b, c)

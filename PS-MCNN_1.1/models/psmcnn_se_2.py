@@ -50,27 +50,31 @@ class psnet(nn.Module):
             nn.Linear(1024, 24)
         ])
 
-        self.se_list = nn.ModuleList([SELayer(160), SELayer(192), SELayer(256), SELayer(384)])  # (5,), 仅在s支路上加入se模块
-            
+        self.se_list = nn.ModuleList(
+            [SELayer(160),
+             SELayer(192),
+             SELayer(256),
+             SELayer(384)])  # (5,), 仅在s支路上加入se模块
+
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        
+
     def forward(self, input):
         # print('input size ', input.size())
         self.output = []
         block_1, s_1 = self.block([input, input, input, input], input, 0)
-        s_1=self.se_list[0](s_1)
+        s_1 = self.se_list[0](s_1)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
-        s_2=self.se_list[1](s_2)
+        s_2 = self.se_list[1](s_2)
 
         block_3, s_3 = self.block(block_2, s_2, 2)
-        s_3=self.se_list[2](s_3)
+        s_3 = self.se_list[2](s_3)
 
         block_4, s_4 = self.block(block_3, s_3, 3)
-        s_4=self.se_list[3](s_4)
+        s_4 = self.se_list[3](s_4)
 
         block_5, s_5 = self.block(block_4, s_4, 4)
-        
+
         for i in range(4):
             _size = block_5[i].size()
             block_5[i] = block_5[i].view(-1, _size[1] * _size[2] * _size[3])
@@ -110,8 +114,13 @@ class psnet(nn.Module):
 
         s_0 = self.s_conv[ind](s_0)
         s_0 = self.pool(s_0)
-        
-        if ind<4:
+
+        if ind < 4:
+            t_0 = torch.cat([t_0, s_0], 1)
+            t_1 = torch.cat([t_1, s_0], 1)
+            t_2 = torch.cat([t_2, s_0], 1)
+            t_3 = torch.cat([t_3, s_0], 1)
+
             indices = torch.arange(0, 32, 1).cuda()
             t_0_partial = torch.index_select(t_0, 1, indices).cuda()
             t_1_partial = torch.index_select(t_1, 1, indices).cuda()
@@ -120,12 +129,8 @@ class psnet(nn.Module):
             s_0 = torch.cat(
                 [t_0_partial, t_1_partial, t_2_partial, t_3_partial, s_0], 1)
 
-            t_0 = torch.cat([t_0, s_0], 1)
-            t_1 = torch.cat([t_1, s_0], 1)
-            t_2 = torch.cat([t_2, s_0], 1)
-            t_3 = torch.cat([t_3, s_0], 1)
-            
         return [t_0, t_1, t_2, t_3], s_0
+
 
 class SELayer(nn.Module):
     def __init__(self, channel, reduction=16):
@@ -135,8 +140,8 @@ class SELayer(nn.Module):
             nn.Linear(channel, int(channel / reduction), bias=False),
             nn.ReLU(inplace=True),
             nn.Linear(int(channel / reduction), channel, bias=False),
-            nn.Sigmoid()
-        )
+            nn.Sigmoid())
+
     def forward(self, x):
         b, c, _, _ = x.size()
         y = self.avg_pool(x).view(b, c)
