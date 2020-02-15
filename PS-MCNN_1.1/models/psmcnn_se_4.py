@@ -59,7 +59,7 @@ class psnet(nn.Module):
                 SE_and_1x1(128),
                 SE_and_1x1(256)
             ])
-            self.se_list_l.append(tmp)
+            self.se_list_t.append(tmp)
 
         for _ in range(4):
             tmp = nn.ModuleList([
