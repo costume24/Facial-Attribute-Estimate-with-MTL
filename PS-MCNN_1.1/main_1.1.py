@@ -126,7 +126,7 @@ parser.add_argument('--version',
                     type=int,
                     help='The version of ps-mcnn architecture')
 parser.add_argument('--place',
-                    default='deepai',
+                    default='my',
                     type=str,
                     help='The place where the programm on')
 best_prec1 = 0
