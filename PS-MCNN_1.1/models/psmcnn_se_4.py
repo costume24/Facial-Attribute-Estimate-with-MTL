@@ -142,6 +142,8 @@ class psnet(nn.Module):
             t_2 = torch.cat([t_2, s_0_2], 1)
             t_3 = torch.cat([t_3, s_0_3], 1)
 
+            print('t_0_se',t_0_se.size())
+            print('s_0',s_0.size())
             s_0 = torch.cat(
                 [t_0_se, t_1_se, t_2_se, t_3_se, s_0], 1)
 
