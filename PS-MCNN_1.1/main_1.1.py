@@ -59,7 +59,7 @@ parser.add_argument('--test-batch',
                     help='test batchsize (default: 200)')
 parser.add_argument('--lr',
                     '--learning-rate',
-                    default=1e-2,
+                    default=1e-3,
                     type=float,
                     help='initial learning rate')
 parser.add_argument('--lr-decay',
