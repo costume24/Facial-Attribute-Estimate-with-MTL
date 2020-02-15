@@ -50,23 +50,25 @@ class psnet(nn.Module):
             nn.Linear(1024, 24)
         ])
 
-        self.se_list = nn.ModuleList()  # (4,5), 仅在t支路上加入se模块
+        self.se_list_t = nn.ModuleList()  # (4,4), t支路到s支路的se + 1x1
+        self.se_list_s = nn.ModuleList() # (4,4), s支路到t支路的se + 1x1
         for _ in range(4):
             tmp = nn.ModuleList([
-                SELayer(192),
-                SELayer(256),
-                SELayer(384),
-                SELayer(640),
-                SELayer(384)
+                SE_and_1x1(32),
+                SE_and_1x1(64),
+                SE_and_1x1(128),
+                SE_and_1x1(256)
             ])
-            self.se_list.append(tmp)
-        self.se_list_s = nn.ModuleList([
-            SELayer(160),
-            SELayer(192),
-            SELayer(256),
-            SELayer(384),
-            SELayer(256)
-        ])  # (5,), 仅在s支路上加入se模块
+            self.se_list_l.append(tmp)
+
+        for _ in range(4):
+            tmp = nn.ModuleList([
+                SELayer(32),
+                SELayer(64),
+                SELayer(128),
+                SELayer(256)
+            ])
+            self.se_list_s.append(tmp)
 
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
@@ -74,29 +76,14 @@ class psnet(nn.Module):
         # print('input size ', input.size())
         self.output = []
         block_1, s_1 = self.block([input, input, input, input], input, 0)
-        for i in range(4):
-            block_1[i] = self.se_list[i][0](block_1[i])
-        s_1 = self.se_list_s[0](s_1)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
-        for i in range(4):
-            block_2[i] = self.se_list[i][1](block_2[i])
-        s_2 = self.se_list_s[1](s_2)
 
         block_3, s_3 = self.block(block_2, s_2, 2)
-        for i in range(4):
-            block_3[i] = self.se_list[i][2](block_3[i])
-        s_3 = self.se_list_s[2](s_3)
 
         block_4, s_4 = self.block(block_3, s_3, 3)
-        for i in range(4):
-            block_4[i] = self.se_list[i][3](block_4[i])
-        s_4 = self.se_list_s[3](s_4)
 
         block_5, s_5 = self.block(block_4, s_4, 4)
-        for i in range(4):
-            block_5[i] = self.se_list[i][4](block_5[i])
-        s_5 = self.se_list_s[4](s_5)
 
         for i in range(4):
             _size = block_5[i].size()
@@ -135,14 +122,24 @@ class psnet(nn.Module):
         t_2 = self.pool(t_2)
         t_3 = self.pool(t_3)
 
+        t_0 = self.se_list_t[0][ind](t_0)
+        t_1 = self.se_list_t[1][ind](t_1)
+        t_2 = self.se_list_t[2][ind](t_2)
+        t_3 = self.se_list_t[3][ind](t_3)
+
         s_0 = self.s_conv[ind](s_0)
         s_0 = self.pool(s_0)
 
         if ind < 4:
-            t_0 = torch.cat([t_0, s_0], 1)
-            t_1 = torch.cat([t_1, s_0], 1)
-            t_2 = torch.cat([t_2, s_0], 1)
-            t_3 = torch.cat([t_3, s_0], 1)
+            s_0_0 = self.se_list_s[0][ind](s_0)
+            s_0_1 = self.se_list_s[1][ind](s_0)
+            s_0_2 = self.se_list_s[2][ind](s_0)
+            s_0_3 = self.se_list_s[3][ind](s_0)
+
+            t_0 = torch.cat([t_0, s_0_0], 1)
+            t_1 = torch.cat([t_1, s_0_1], 1)
+            t_2 = torch.cat([t_2, s_0_2], 1)
+            t_3 = torch.cat([t_3, s_0_3], 1)
 
             indices = torch.arange(0, 32, 1).cuda()
             t_0_partial = torch.index_select(t_0, 1, indices).cuda()
@@ -170,3 +167,22 @@ class SELayer(nn.Module):
         y = self.avg_pool(x).view(b, c)
         y = self.fc(y).view(b, c, 1, 1)
         return x * y.expand_as(x)
+
+class SE_and_1x1(nn.Module):
+    def __init__(self, channel, oup=32, reduction=16):
+        super(SE_and_1x1, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.conv_1x1 = nn.Conv2d(channel, oup, 1, 1, 1, bias=False)
+        self.fc = nn.Sequential(
+            nn.Linear(channel, int(channel / reduction), bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(int(channel / reduction), channel, bias=False),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        y = x * y.expand_as(x)
+        y = self.conv_1x1(y)
+        return y

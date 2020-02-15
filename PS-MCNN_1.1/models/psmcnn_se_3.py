@@ -62,7 +62,7 @@ class psnet(nn.Module):
             [SELayer(160),
              SELayer(192),
              SELayer(256),
-             SELayer(384)])  # (5,), 仅在s支路上加入se模块
+             SELayer(384)])  # (4,), 仅在s支路上加入se模块
 
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 

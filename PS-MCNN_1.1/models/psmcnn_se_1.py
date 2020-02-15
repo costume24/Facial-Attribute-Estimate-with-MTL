@@ -50,7 +50,7 @@ class psnet(nn.Module):
             nn.Linear(1024, 24)
         ])
 
-        self.se_list = nn.ModuleList()  # (4,5), 仅在t支路上加入se模块
+        self.se_list = nn.ModuleList()  # (4,4), 仅在t支路上加入se模块
         for _ in range(4):
             tmp = nn.ModuleList(
                 [SELayer(64),
