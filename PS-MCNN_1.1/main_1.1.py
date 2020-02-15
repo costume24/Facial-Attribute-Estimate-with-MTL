@@ -493,6 +493,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
     for ii in range(40):
         b_acc_dic[label_list[ii]] = balance[ii]
     writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
+    print('Averaged balanced Accuracy (training): ',torch.mean(balance).item())
 
     return (loss_avg, cls_train_Accuracy, each_total, count)
 
@@ -613,6 +614,8 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
     for ii in range(40):
         b_acc_dic[label_list[ii]] = balance[ii]
     writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
+    print('Averaged balanced Accuracy (validating): ',torch.mean(balance).item())
+
 
     return (loss_avg, cls_val_Accuracy, each_total, count)
 
