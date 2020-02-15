@@ -132,15 +132,15 @@ class psnet(nn.Module):
             s_0_2 = self.se_list_s[2][ind](s_0)
             s_0_3 = self.se_list_s[3][ind](s_0)
 
-            t_0 = torch.cat([t_0, s_0_0], 1)
-            t_1 = torch.cat([t_1, s_0_1], 1)
-            t_2 = torch.cat([t_2, s_0_2], 1)
-            t_3 = torch.cat([t_3, s_0_3], 1)
-
             t_0_se = self.se_list_t[0][ind](t_0)
             t_1_se = self.se_list_t[1][ind](t_1)
             t_2_se = self.se_list_t[2][ind](t_2)
             t_3_se = self.se_list_t[3][ind](t_3)
+
+            t_0 = torch.cat([t_0, s_0_0], 1)
+            t_1 = torch.cat([t_1, s_0_1], 1)
+            t_2 = torch.cat([t_2, s_0_2], 1)
+            t_3 = torch.cat([t_3, s_0_3], 1)
 
             s_0 = torch.cat(
                 [t_0_se, t_1_se, t_2_se, t_3_se, s_0], 1)
