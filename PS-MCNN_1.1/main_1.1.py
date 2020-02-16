@@ -284,40 +284,24 @@ def main():
     writer = SummaryWriter(os.path.join(args.checkpoint, 'logs'))
     count_train = 0
     count_val = 0
-    # each_train_best = [0] * 40
-    # each_val_best = [0] * 40
     each_train = torch.zeros(40, device='cuda:0')
     each_val = torch.zeros(40, device='cuda:0')
-    # best_train = {}
-    # best_val = {}
     for epoch in range(args.start_epoch, args.epochs):
         lr = adjust_learning_rate(optimizer, epoch)
 
         print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, lr))
 
-        # train for one epoch
         train_loss, train_acc, each_train, count_train = train(
             train_loader, model, criterion, optimizer, epoch, writer,
             count_train, each_train)
 
-        # evaluate on validation set
         val_loss, prec1, each_val, count_val = validate(
             val_loader, model, criterion, writer, count_val, each_val, epoch)
 
-        # append logger file
         logger.append([lr, train_loss, val_loss, train_acc, prec1])
 
-        # for i in range(40):
-        #     each_train_best[i] = each_train_best[
-        #         i] if each_train_best[i] > each_train[i] else each_train[i]
-        #     each_val_best[i] = each_val_best[
-        #         i] if each_val_best[i] > each_val[i] else each_val[i]
-        #     best_train[label_list[i]] = each_train_best[i]
-        #     best_val[label_list[i]] = each_val_best[i]
         # tensorboardX
         writer.add_scalar('learning_rate', lr, epoch + 1)
-        # writer.add_scalars('each_train', best_train, epoch + 1)
-        # writer.add_scalars('each_val', best_val, epoch + 1)
         is_best = prec1 > best_prec1
         best_prec1 = max(prec1, best_prec1)
         save_checkpoint(
@@ -349,29 +333,25 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
     bar = Bar('Training', max=len(train_loader))
     batch_time = AverageMeter()
     data_time = AverageMeter()
-    # switch to train mode
+
     model.train()
 
     end = time.time()
+
     train_total = 0.0
     train_correct = 0.0
+
     # 计算平衡准确率
     tp = [0] * 40
     Np = [0] * 40
     tn = [0] * 40
     Nn = [0] * 40
     balance = [0] * 40
-    # count = 0
     weight = [1] * 40
     stage = 1
     if epoch >= 10:
         stage = 1
     for i, (input, target, id_target) in enumerate(train_loader):
-        # 预加载代码，暂时不用，会爆显存
-        # prefetcher = data_prefetcher(train_loader)
-        # input, target = prefetcher.next()
-        # i = 0
-        # while input is not None:
 
         # measure data loading time
         optimizer.zero_grad()
@@ -424,16 +404,24 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
 
         # 计算平衡准确率
+        balance_tmp = [0] * 40
         for iii in range(40):
-            Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
-            Nn[iii] += target.size(0)-Np[iii]
+            # Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
+            # Nn[iii] += target.size(0)-Np[iii]
 
-            for jjj in range(pred.size(0)):
-                if pred[jjj,iii] == target[jjj,iii] == 1:
-                    tp[iii] += 1
-                elif pred[jjj,iii] == target[jjj,iii] == 0:
-                    tn[iii] += 1
+            # for jjj in range(pred.size(0)):
+            #     if pred[jjj,iii] == target[jjj,iii] == 1:
+            #         tp[iii] += 1
+            #     elif pred[jjj,iii] == target[jjj,iii] == 0:
+            #         tn[iii] += 1
+            balance_tmp[iii] = balanced_accuracy_score(target[:,iii], pred[:,iii])
         
+        if sum(balance) == 0:
+            balance = balance_tmp
+        else:
+            balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
+        mean_balance = torch.sum(mean_balance)
+
         # 每个属性在当前batch的准确率
         correct_single = compare_result / output.size(0)  # (?,40)
 
@@ -467,16 +455,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         count += 1
         # plot progress
 
-        # Best and worst performance
-        # best_acc_id = torch.argmax(correct_single)
-        # best_attr = label_list[best_acc_id]
-        # best_acc = correct_single[best_acc_id]
-
-        # worst_acc_id = torch.argmin(correct_single)
-        # worst_attr = label_list[worst_acc_id]
-        # worst_acc = correct_single[worst_acc_id]
         bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
-        'top1: {top1: .5f}'.format(
+        'mbAcc: {mbAcc: .5f}'.format(
             batch=i + 1,
             size=len(train_loader),
             data=data_time.avg,
@@ -484,14 +464,12 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             total=bar.elapsed_td,
             eta=bar.eta_td,
             loss=loss_avg,
-            top1=cls_train_Accuracy
+            mbAcc=mean_balance
         )
         bar.next()
-    # i += 1
-    # input, target = prefetcher.next()
     bar.finish()
     # 统计每个属性的**平均**准确率
-    balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
+    # balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
     b_acc_dic = {}
     for ii in range(40):
         b_acc_dic[label_list[ii]] = balance[ii]
@@ -508,8 +486,8 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
     batch_time = AverageMeter()
     data_time = AverageMeter()
 
-    # switch to evaluate mode
     model.eval()
+
     # 计算平衡准确率
     tp = [0] * 40
     Np = [0] * 40
@@ -556,15 +534,23 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             _, pred = torch.max(output, 1)
 
             # 计算平衡准确率
+            balance_tmp = [0] * 40
             for iii in range(40):
-                Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
-                Nn[iii] += target.size(0)-Np[iii]
+                # Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
+                # Nn[iii] += target.size(0)-Np[iii]
 
-                for jjj in range(pred.size(0)):
-                    if pred[jjj,iii] == target[jjj,iii] == 1:
-                        tp[iii] += 1
-                    elif pred[jjj,iii] == target[jjj,iii] == 0:
-                        tn[iii] += 1
+                # for jjj in range(pred.size(0)):
+                #     if pred[jjj,iii] == target[jjj,iii] == 1:
+                #         tp[iii] += 1
+                #     elif pred[jjj,iii] == target[jjj,iii] == 0:
+                #         tn[iii] += 1
+                balance_tmp[iii] = balanced_accuracy_score(target[:,iii], pred[:,iii])
+
+            if sum(balance) == 0:
+                balance = balance_tmp
+            else:
+                balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
+            mean_balance = torch.sum(mean_balance)
 
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
@@ -590,16 +576,8 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             writer.add_scalars('loss', {'validate_loss': loss_avg}, count)
             writer.add_scalars('acc_val', acc_dic, count)
             count += 1
-            # plot progress
-            # best_acc_id = torch.argmax(correct_single)
-            # best_attr = label_list[best_acc_id]
-            # best_acc = correct_single[best_acc_id]
-
-            # worst_acc_id = torch.argmin(correct_single)
-            # worst_attr = label_list[worst_acc_id]
-            # worst_acc = correct_single[worst_acc_id]
             bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
-                'top1: {top1: .5f}'.format(
+                'mbAcc: {mbAcc: .5f}'.format(
                 batch=i + 1,
                 size=len(val_loader),
                 data=data_time.avg,
@@ -607,12 +585,12 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
                 total=bar.elapsed_td,
                 eta=bar.eta_td,
                 loss=loss_avg,
-                top1=cls_val_Accuracy
+                mbAcc=mean_balance
             )
             bar.next()
     bar.finish()
     # 统计每个属性的**平均**准确率
-    balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
+    # balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
     b_acc_dic = {}
     for ii in range(40):
         b_acc_dic[label_list[ii]] = balance[ii]
