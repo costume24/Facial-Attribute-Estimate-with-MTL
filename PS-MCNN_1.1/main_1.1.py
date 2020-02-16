@@ -414,16 +414,10 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             #         tp[iii] += 1
             #     elif pred[jjj,iii] == target[jjj,iii] == 0:
             #         tn[iii] += 1
-            a=np.array(target[:,iii].cpu())
-            b=np.array(pred[:,iii].cpu())
-            ai=set(a)
-            bi=set(b)
-            print('y_true',ai)
-            print('y_pred',bi)
             balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
         
         if sum(balance) == 0:
-            balance = balance_tmp
+            balance = torch.Tensor(balance_tmp)
         else:
             balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
         mean_balance = torch.mean(balance)
