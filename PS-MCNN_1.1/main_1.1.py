@@ -414,7 +414,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             #         tp[iii] += 1
             #     elif pred[jjj,iii] == target[jjj,iii] == 0:
             #         tn[iii] += 1
-            print(iii, list(set(target[:,iii]).difference(set(pred[:,iii]))))
             balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
         
         if sum(balance) == 0:
@@ -422,7 +421,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         else:
             balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
         print('balance: ', balance)
-        mean_balance = np.mean(balance)
+        mean_balance = torch.mean(balance)
 
         # 每个属性在当前batch的准确率
         correct_single = compare_result / output.size(0)  # (?,40)
