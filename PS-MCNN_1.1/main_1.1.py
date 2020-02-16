@@ -393,8 +393,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         loss += lc_loss
         loss = loss.requires_grad_()
         _, pred = torch.max(output, 1)  # (?,40)
-        print(pred.size())
-        print(pred[0])
         # loss的加权
         max_loss = max(loss_attr)
         min_loss = min(loss_attr)
@@ -416,13 +414,14 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             #         tp[iii] += 1
             #     elif pred[jjj,iii] == target[jjj,iii] == 0:
             #         tn[iii] += 1
-            print(target[:,iii])
+            print(iii, list(set(target[:,iii]).difference(set(pred[:,iii]))))
             balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
         
         if sum(balance) == 0:
             balance = balance_tmp
         else:
             balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
+        print('balance: ', balance)
         mean_balance = np.mean(balance)
 
         # 每个属性在当前batch的准确率
