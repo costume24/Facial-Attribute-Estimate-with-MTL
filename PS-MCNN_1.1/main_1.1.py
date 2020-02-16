@@ -393,7 +393,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         loss += lc_loss
         loss = loss.requires_grad_()
         _, pred = torch.max(output, 1)  # (?,40)
-
+        print(pred.size())
+        print(pred[0])
         # loss的加权
         max_loss = max(loss_attr)
         min_loss = min(loss_attr)
@@ -533,8 +534,7 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             loss += lc_loss
             loss = loss.requires_grad_()
             _, pred = torch.max(output, 1)
-            print(pred.size())
-            print(pred[0])
+
 
             # 计算平衡准确率
             balance_tmp = [0] * 40
