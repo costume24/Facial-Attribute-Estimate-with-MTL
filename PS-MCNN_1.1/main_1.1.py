@@ -9,6 +9,7 @@ import shutil
 import time
 import random
 import math
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -420,7 +421,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             balance = balance_tmp
         else:
             balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
-        mean_balance = mean(balance)
+        mean_balance = np.mean(balance)
 
         # 每个属性在当前batch的准确率
         correct_single = compare_result / output.size(0)  # (?,40)
@@ -550,7 +551,7 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
                 balance = balance_tmp
             else:
                 balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
-            mean_balance = mean(balance)
+            mean_balance = np.mean(balance)
 
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
