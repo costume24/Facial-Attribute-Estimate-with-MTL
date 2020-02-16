@@ -414,8 +414,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             #         tp[iii] += 1
             #     elif pred[jjj,iii] == target[jjj,iii] == 0:
             #         tn[iii] += 1
-            a=np.array(target[:,iii])
-            b=np.array(pred[:,iii])
+            a=np.array(target[:,iii].cpu())
+            b=np.array(pred[:,iii].cpu())
             ai=set(a)
             bi=set(b)
             print('y_true',ai)
