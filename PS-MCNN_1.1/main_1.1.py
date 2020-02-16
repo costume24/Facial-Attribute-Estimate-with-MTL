@@ -414,7 +414,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
             #         tp[iii] += 1
             #     elif pred[jjj,iii] == target[jjj,iii] == 0:
             #         tn[iii] += 1
-            balance_tmp[iii] = balanced_accuracy_score(target[:,iii], pred[:,iii])
+            balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
         
         if sum(balance) == 0:
             balance = balance_tmp
@@ -544,7 +544,7 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
                 #         tp[iii] += 1
                 #     elif pred[jjj,iii] == target[jjj,iii] == 0:
                 #         tn[iii] += 1
-                balance_tmp[iii] = balanced_accuracy_score(target[:,iii], pred[:,iii])
+                balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
 
             if sum(balance) == 0:
                 balance = balance_tmp
