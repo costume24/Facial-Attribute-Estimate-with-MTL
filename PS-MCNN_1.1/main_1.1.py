@@ -23,6 +23,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 import models
 from math import cos, pi
+from sklearn.metrics import balanced_accuracy_score
 
 # from prefetch_generator import BackgroundGenerator
 from celeba import CelebA, TensorSampler, data_prefetcher
@@ -183,6 +184,8 @@ def main():
         data_path = '/media/E/xuke/CelebA/'
     elif args.place == 'phd-1':
         data_path = '/media/kb541/data/xuke/CelebA/'
+    elif args.place == 'mist':
+        data_path = '/home/mist/CelebA/'
     # model.apply(weight_init)
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda()
@@ -552,7 +555,6 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             loss = loss.requires_grad_()
             _, pred = torch.max(output, 1)
 
-            compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
             # 计算平衡准确率
             for iii in range(40):
                 Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
