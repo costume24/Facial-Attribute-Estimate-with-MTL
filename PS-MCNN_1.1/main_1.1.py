@@ -548,10 +548,10 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
                 balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
 
             if sum(balance) == 0:
-                balance = balance_tmp
+                balance = torch.Tensor(balance_tmp)
             else:
                 balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
-            mean_balance = np.mean(balance)
+            mean_balance = torch.mean(balance)
 
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
