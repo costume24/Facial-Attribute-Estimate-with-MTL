@@ -1,2 +1,15 @@
 *.pyc
 *.tar
+PS-MCNN_1\.1/checkpoints_2020-02-17_10-30-07/
+
+PS-MCNN_1\.1/checkpoints_2020-02-17_10-30-24/
+
+PS-MCNN_1\.1/checkpoints_2020-02-17_23-14-10/
+
+PS-MCNN_1\.1/checkpoints_2020-02-18_00-05-39/
+
+PS-MCNN_1\.1/utils/
+
+PS-MCNN_1\.1/models/__pycache__/
+
+PS-MCNN_1\.1/models/
