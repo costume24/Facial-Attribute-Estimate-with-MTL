@@ -751,7 +751,7 @@ def weight_init(m):
         nn.init.constant_(m.bias, 0)
 
 def rank(input, mode):
-    input = list(input.numpy())
+    input = list(input.cpu().numpy())
     w = open(os.path.join(args.checkpoints, mode + '.txt'))
     if mode.startswith('A'):
         with open('./origin.txt') as f:
