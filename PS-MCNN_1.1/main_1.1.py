@@ -323,8 +323,6 @@ def main():
         best_prec1 = max(prec1, best_prec1)
         if is_best:
             best_acc_of_each_val = each_val
-        rank(best_acc_of_each_val,'Acc')
-
         save_checkpoint(
             {
                 'epoch': epoch + 1,
@@ -431,7 +429,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         else:
             balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
         mean_balance = torch.mean(balance)
-
+        rank(balance,'BAcc')
         # 每个属性在当前batch的准确率
         correct_single = compare_result / output.size(0)  # (?,40)
 
