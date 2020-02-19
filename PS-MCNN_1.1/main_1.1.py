@@ -786,7 +786,7 @@ class BCEFocalLoss(torch.nn.Module):
     def forward(self, x, t):
         n,_=x.size()
         p = x.sigmoid()
-        onehot = torch.FloatTensor(n, 2)
+        onehot = torch.FloatTensor(n, 2).cuda()
         onehot.zero_()
         onehot.scatter_(1, t, 1)
         t = onehot
