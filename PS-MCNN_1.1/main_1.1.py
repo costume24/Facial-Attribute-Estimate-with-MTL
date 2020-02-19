@@ -787,8 +787,8 @@ class BCEFocalLoss(torch.nn.Module):
         n,_=x.size()
         p = x.sigmoid()
         onehot = torch.FloatTensor(n, 2)
-        onehot = onehot.zero_()
-        onehot = onehot.scatter_(1, t, 1)
+        onehot.zero_()
+        onehot.scatter_(1, t, 1)
         t = onehot
         pt = p * t + (1 - p) * (1 - t)  # pt = p if t > 0 else 1-p
         w = self.alpha * t + (1 - self.alpha) * (1 - t
