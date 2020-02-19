@@ -795,10 +795,9 @@ class BCEFocalLoss(torch.nn.Module):
         w = self.alpha * t + (1 - self.alpha) * (1 - t
                                        )  # w = alpha if t > 0 else 1-alpha
         w = w * (1 - pt).pow(self.gamma)
-        w.requires_grad = False
         return F.binary_cross_entropy_with_logits(p,
                                                   t,
-                                                  w,
+                                                  w.detach_(),
                                                   reduction=self.reduction)
 
 
