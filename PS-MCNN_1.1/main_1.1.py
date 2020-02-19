@@ -323,6 +323,8 @@ def main():
         best_prec1 = max(prec1, best_prec1)
         if is_best:
             best_acc_of_each_val = each_val
+        rank(best_acc_of_each_val,'Acc')
+
         save_checkpoint(
             {
                 'epoch': epoch + 1,
@@ -342,7 +344,7 @@ def main():
     writer.close()
 
     rank(best_acc_of_each_val,'Acc')
-    rank(best_b_acc_of_each_val,'Acc')
+    rank(best_b_acc_of_each_val,'BAcc')
     test(test_loader, model, criterion)
     print('Best accuracy:')
     print(best_prec1)
@@ -688,8 +690,8 @@ def test(test_loader, model, criterion):
             bar.next()
     bar.finish()
     # 统计每个属性的**平均**准确率
-    rank(balance,'test_BAcc')
-    rank(acc_for_each,'test_Acc')
+    rank(balance,'BAcc_test')
+    rank(acc_for_each,'Acc_test')
     print('Averaged balanced Accuracy (testing): ',torch.mean(balance).item())
 
     return (loss_avg, cls_val_Accuracy, acc_for_each, balance, mean_balance)
@@ -758,14 +760,14 @@ def rank(input, mode):
     w = open(os.path.join(args.checkpoint, mode + '.txt'),'w')
     if mode.startswith('A'):
         with open('./origin.txt') as f:
-            line = f.readline()
+            sline = f.readline()
             i = 0
-            while line:
-                line = line.split()
+            while sline:
+                line = sline.split()
                 aine = list(map(float, line[1:]))
                 aine.append(input[i])
                 order = aine.index(input[i])
-                w.writelines(line + ' ' + str(100 * (1 - input[i])) + ' ' +
+                w.writelines(sline + ' ' + str(100 * (1 - input[i])) + ' ' +
                             str(input[i]) + ' ' + str(order))
                 i += 1
     else:
