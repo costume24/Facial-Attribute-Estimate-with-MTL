@@ -347,7 +347,7 @@ def main():
     print('Best accuracy:')
     print(best_prec1)
     print('Best balanced accuracy:')
-    print(best_b_acc_val.item())
+    print(best_b_acc_val.item)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, writer, count):
@@ -480,7 +480,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         b_acc_dic[label_list[ii]] = balance[ii]
     b_acc_dic['Ave.']=torch.mean(balance).item()
     writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
-    print('Averaged balanced Accuracy (training): ',b_acc_dic['Ave.'])
 
     return (loss_avg, cls_train_Accuracy, acc_for_each, count, balance, mean_balance)
 
@@ -589,7 +588,6 @@ def validate(val_loader, model, criterion, writer, count, epoch):
         b_acc_dic[label_list[ii]] = balance[ii]
     b_acc_dic['Ave.']=torch.mean(balance).item()
     writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
-    print('Averaged balanced Accuracy (validating): ',b_acc_dic['Ave.'])
 
 
     return (loss_avg, cls_val_Accuracy, acc_for_each, count, balance, mean_balance)
@@ -689,7 +687,6 @@ def test(test_loader, model, criterion):
     # 统计每个属性的**平均**准确率
     rank(balance,'BAcc_test')
     rank(acc_for_each,'Acc_test')
-    print('Averaged balanced Accuracy (testing): ',torch.mean(balance).item())
 
     return (loss_avg, cls_val_Accuracy, acc_for_each, balance, mean_balance)
 
