@@ -784,6 +784,7 @@ class BCEFocalLoss(torch.nn.Module):
         self.reduction = reduction
 
     def forward(self, x, t):
+        print(x.size())
         n, c, _ = x.size()
         x = x.view(n, c)
         p = x.sigmoid()
