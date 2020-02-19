@@ -96,6 +96,7 @@ parser.add_argument('--weight-decay',
                     type=float,
                     metavar='W',
                     help='weight decay (default: 1e-4)')
+parser.add_argument('--focal',default=False,type=bool)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -196,6 +197,8 @@ def main():
     # model.apply(weight_init)
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda()
+    if args.focal:
+        criterion = BCEFocalLoss().cuda()
 
     # optimizer = torch.optim.SGD(model.parameters(),
     #                             args.lr,
@@ -752,7 +755,7 @@ def weight_init(m):
 
 def rank(input, mode):
     input = list(input.cpu().numpy())
-    w = open(os.path.join(args.checkpoint, mode + '.txt'))
+    w = open(os.path.join(args.checkpoint, mode + '.txt'),'w')
     if mode.startswith('A'):
         with open('./origin.txt') as f:
             line = f.readline()
@@ -772,6 +775,26 @@ def rank(input, mode):
     w.close()
 
 
+class BCEFocalLoss(torch.nn.Module):
+    """
+    二分类的Focalloss alpha 固定
+    """
+    def __init__(self, gamma=2, alpha=0.25, reduction='elementwise_mean'):
+        super().__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        self.reduction = reduction
+ 
+    def forward(self, _input, target):
+        pt = torch.sigmoid(_input)
+        alpha = self.alpha
+        loss = - alpha * (1 - pt) ** self.gamma * target * torch.log(pt) - \
+               (1 - alpha) * pt ** self.gamma * (1 - target) * torch.log(1 - pt)
+        if self.reduction == 'elementwise_mean':
+            loss = torch.mean(loss)
+        elif self.reduction == 'sum':
+            loss = torch.sum(loss)
+        return loss
 
 if __name__ == '__main__':
     main()
