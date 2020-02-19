@@ -752,7 +752,7 @@ def weight_init(m):
 
 def rank(input, mode):
     input = list(input.cpu().numpy())
-    w = open(os.path.join(args.checkpoints, mode + '.txt'))
+    w = open(os.path.join(args.checkpoint, mode + '.txt'))
     if mode.startswith('A'):
         with open('./origin.txt') as f:
             line = f.readline()
