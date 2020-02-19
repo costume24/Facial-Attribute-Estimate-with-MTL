@@ -429,7 +429,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         else:
             balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
         mean_balance = torch.mean(balance)
-        rank(balance,'BAcc')
+        rank(balance,'Acc')
         # 每个属性在当前batch的准确率
         correct_single = compare_result / output.size(0)  # (?,40)
 
@@ -766,12 +766,12 @@ def rank(input, mode):
                 aine.append(input[i])
                 order = aine.index(input[i])
                 w.writelines(sline + ' ' + str(100 * (1 - input[i])) + ' ' +
-                            str(input[i]) + ' ' + str(order))
+                            str(input[i]) + ' ' + str(order)+'\n')
                 i += 1
     else:
         for i in range(len(input)):
             w.writelines(label_list[i] + ': ' + str(100 * (1 - input[i])) +
-                         ' ' + str(input[i]))
+                         ' ' + str(input[i])+'\n')
     w.close()
 
 
