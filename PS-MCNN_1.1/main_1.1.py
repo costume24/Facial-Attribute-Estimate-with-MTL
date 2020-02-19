@@ -347,7 +347,7 @@ def main():
     print('Best accuracy:')
     print(best_prec1)
     print('Best balanced accuracy:')
-    print(best_b_acc_val)
+    print(best_b_acc_val.item())
 
 
 def train(train_loader, model, criterion, optimizer, epoch, writer, count):
