@@ -96,7 +96,7 @@ parser.add_argument('--weight-decay',
                     type=float,
                     metavar='W',
                     help='weight decay (default: 1e-4)')
-parser.add_argument('--focal',default=False,type=bool)
+parser.add_argument('--focal',default=True,type=bool)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -365,9 +365,9 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     # 计算平衡准确率
     balance = [0] * 40
     weight = [1] * 40
-    stage = 1
+    stage = 0
     if epoch >= 10:
-        stage = 1
+        stage = 0
     for i, (input, target, id_target) in enumerate(train_loader):
 
         # measure data loading time
@@ -786,7 +786,7 @@ class BCEFocalLoss(torch.nn.Module):
     def forward(self, x, t):
         n,_=x.size()
         p = x.sigmoid()
-        onehot = torch.FloatTensor(n, 2).cuda()
+        onehot = torch.FloatTensor(n, 2)
         onehot = onehot.zero_()
         onehot = onehot.scatter_(1, t, 1)
         t = onehot
