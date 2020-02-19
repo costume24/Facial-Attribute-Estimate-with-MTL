@@ -767,6 +767,7 @@ def rank(input, mode):
                 order = aine.index(input[i])
                 w.writelines(sline + ' ' + str(100 * (1 - input[i])) + ' ' +
                             str(input[i]) + ' ' + str(order)+'\n')
+                sline = f.readline()
                 i += 1
     else:
         for i in range(len(input)):
