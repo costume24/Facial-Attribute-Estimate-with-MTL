@@ -132,7 +132,8 @@ parser.add_argument('--place',
                     type=str,
                     help='The place where the programm on')
 best_prec1 = 0
-
+best_train_acc = 0
+best_b_acc_val = 0
 label_list = [
     'Arched_Eyebrows', 'Bags_Under_Eyes', 'Bald', 'Bangs', 'Black_Hair',
     'Blond_Hair', 'Brown_Hair', 'Bushy_Eyebrows', 'Eyeglasses', 'Gray_Hair',
@@ -151,7 +152,7 @@ attr_order = [
 
 
 def main():
-    global args, best_prec1
+    global args, best_prec1, best_train_acc, best_b_acc_val
     args = parser.parse_args()
 
     # Use CUDA
@@ -166,15 +167,20 @@ def main():
     if use_cuda:
         torch.cuda.manual_seed_all(args.manual_seed)
 
+    title = 'CelebA-psmcnn'
     # create model
     if args.version == 1:
         model = models.psmcnn_se_1.psnet().to(device)
+        title = 'CelebA-psmcnn-1'
     elif args.version == 2:
         model = models.psmcnn_se_2.psnet().to(device)
+        title = 'CelebA-psmcnn-2'
     elif args.version == 3:
         model = models.psmcnn_se_3.psnet().to(device)
+        title = 'CelebA-psmcnn-3'
     elif args.version == 4:
         model = models.psmcnn_se_4.psnet().to(device)
+        title = 'CelebA-psmcnn-4'
 
     data_path = ''
     if args.place == 'deepai':
@@ -199,7 +205,6 @@ def main():
                                  args.lr,
                                  weight_decay=args.weight_decay)
     # optionally resume from a checkpoint
-    title = 'CelebA-psmcnn'
     if not os.path.isdir(args.checkpoint):
         mkdir_p(args.checkpoint)
 
@@ -281,30 +286,40 @@ def main():
     #     validate(test_loader, model, criterion,)
     #     return
 
-    # visualization
+
     writer = SummaryWriter(os.path.join(args.checkpoint, 'logs'))
     count_train = 0
     count_val = 0
-    each_train = torch.zeros(40, device='cuda:0')
-    each_val = torch.zeros(40, device='cuda:0')
+    best_acc_of_each_train = torch.zeros(40, device='cuda:0')
+    best_acc_of_each_val = torch.zeros(40, device='cuda:0')
+    best_b_acc_of_each_train = torch.zeros(40, device='cuda:0')
+    best_b_acc_of_each_val = torch.zeros(40, device='cuda:0')
     for epoch in range(args.start_epoch, args.epochs):
         lr = adjust_learning_rate(optimizer, epoch)
 
         print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, lr))
 
-        train_loss, train_acc, each_train, count_train = train(
+        train_loss, train_acc, each_train, count_train, b_acc_of_each_train, mb_train = train(
             train_loader, model, criterion, optimizer, epoch, writer,
-            count_train, each_train)
+            count_train)
 
-        val_loss, prec1, each_val, count_val = validate(
-            val_loader, model, criterion, writer, count_val, each_val, epoch)
+        val_loss, prec1, each_val, count_val, b_acc_of_each_val, mb_val = validate(
+            val_loader, model, criterion, writer, count_val, epoch)
 
         logger.append([lr, train_loss, val_loss, train_acc, prec1])
 
-        # tensorboardX
+        if train_acc > best_train_acc:
+            best_acc_of_each_train = each_train
+            best_train_acc = train_acc
+
+        if mb_val > best_b_acc_val:
+            best_b_acc_of_each_val = b_acc_of_each_val
+            best_b_acc_val = mb_val
         writer.add_scalar('learning_rate', lr, epoch + 1)
         is_best = prec1 > best_prec1
         best_prec1 = max(prec1, best_prec1)
+        if is_best:
+            best_acc_of_each_val = each_val
         save_checkpoint(
             {
                 'epoch': epoch + 1,
@@ -315,6 +330,7 @@ def main():
             },
             is_best,
             checkpoint=args.checkpoint)
+
     print('[*] Training task finished at ',
           time.strftime("%Y-%m-%d %H-%M-%S", time.localtime()))
     logger.close()
@@ -322,15 +338,16 @@ def main():
     savefig(os.path.join(args.checkpoint, 'log.eps'))
     writer.close()
 
+    rank(best_acc_of_each_val,'Acc')
+    rank(best_b_acc_of_each_val,'Acc')
+    test(test_loader, model, criterion)
     print('Best accuracy:')
     print(best_prec1)
-    print('Best accuracy of each attribute:')
-    for i in range(40):
-        print(label_list[i], ':', each_val[i].item(), end='   ===   ')
+    print('Best balanced accuracy:')
+    print(best_b_acc_val)
 
 
-def train(train_loader, model, criterion, optimizer, epoch, writer, count,
-          each_total):
+def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     bar = Bar('Training', max=len(train_loader))
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -341,12 +358,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
 
     train_total = 0.0
     train_correct = 0.0
-
+    acc_for_each =  torch.zeros(40, device='cuda:0')
     # 计算平衡准确率
-    tp = [0] * 40
-    Np = [0] * 40
-    tn = [0] * 40
-    Nn = [0] * 40
     balance = [0] * 40
     weight = [1] * 40
     stage = 1
@@ -406,16 +419,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         # 计算平衡准确率
         balance_tmp = [0] * 40
         for iii in range(40):
-            # Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
-            # Nn[iii] += target.size(0)-Np[iii]
-
-            # for jjj in range(pred.size(0)):
-            #     if pred[jjj,iii] == target[jjj,iii] == 1:
-            #         tp[iii] += 1
-            #     elif pred[jjj,iii] == target[jjj,iii] == 0:
-            #         tn[iii] += 1
             balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
-        
+
         if sum(balance) == 0:
             balance = torch.Tensor(balance_tmp)
         else:
@@ -427,9 +432,9 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
 
         # 所有属性的平均准确率
         if i == 0:
-            each_total = correct_single
+            acc_for_each = correct_single
         else:
-            each_total = (each_total + correct_single) / 2
+            acc_for_each = (acc_for_each + correct_single) / 2
 
         train_correct += torch.sum(
             pred == target,
@@ -453,7 +458,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         writer.add_scalars('loss', {'train_loss': loss_avg}, count)
         writer.add_scalars('acc_train', acc_dic, count)
         count += 1
-        # plot progress
 
         bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
         'mbAcc: {mbAcc: .5f}'.format(
@@ -469,7 +473,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
         bar.next()
     bar.finish()
     # 统计每个属性的**平均**准确率
-    # balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
     b_acc_dic = {}
     for ii in range(40):
         b_acc_dic[label_list[ii]] = balance[ii]
@@ -477,10 +480,10 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count,
     writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
     print('Averaged balanced Accuracy (training): ',b_acc_dic['Ave.'])
 
-    return (loss_avg, cls_train_Accuracy, each_total, count)
+    return (loss_avg, cls_train_Accuracy, acc_for_each, count, balance, mean_balance)
 
 
-def validate(val_loader, model, criterion, writer, count, each_total, epoch):
+def validate(val_loader, model, criterion, writer, count, epoch):
     bar = Bar('Validating', max=len(val_loader))
 
     batch_time = AverageMeter()
@@ -488,16 +491,12 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
 
     model.eval()
 
-    # 计算平衡准确率
-    tp = [0] * 40
-    Np = [0] * 40
-    tn = [0] * 40
-    Nn = [0] * 40
     balance = [0] * 40
     with torch.no_grad():
         end = time.time()
         val_total = 0.0
         val_correct = 0.0
+        acc_for_each =  torch.zeros(40, device='cuda:0')
         for i, (input, target, id_target) in enumerate(val_loader):
             # measure data loading time
             data_time.update(time.time() - end)
@@ -537,14 +536,6 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             # 计算平衡准确率
             balance_tmp = [0] * 40
             for iii in range(40):
-                # Np[iii] += sum([1 for xx in target[:,iii] if xx == 1])
-                # Nn[iii] += target.size(0)-Np[iii]
-
-                # for jjj in range(pred.size(0)):
-                #     if pred[jjj,iii] == target[jjj,iii] == 1:
-                #         tp[iii] += 1
-                #     elif pred[jjj,iii] == target[jjj,iii] == 0:
-                #         tn[iii] += 1
                 balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
 
             if sum(balance) == 0:
@@ -557,9 +548,9 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
                                        dtype=torch.float32) / output.size(0)
             # 所有属性的平均准确率
             if i == 0:
-                each_total = correct_single
+                acc_for_each = correct_single
             else:
-                each_total = (each_total + correct_single) / 2
+                acc_for_each = (acc_for_each + correct_single) / 2
 
             val_correct += torch.sum(pred == target, dtype=torch.float32).item(
             ) / 40.0  # num_classes need you to define
@@ -591,7 +582,6 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
             bar.next()
     bar.finish()
     # 统计每个属性的**平均**准确率
-    # balance = ((torch.Tensor(tp)/torch.Tensor(Np)) + (torch.Tensor(tn)/torch.Tensor(Nn))) * 0.5
     b_acc_dic = {}
     for ii in range(40):
         b_acc_dic[label_list[ii]] = balance[ii]
@@ -600,7 +590,106 @@ def validate(val_loader, model, criterion, writer, count, each_total, epoch):
     print('Averaged balanced Accuracy (validating): ',b_acc_dic['Ave.'])
 
 
-    return (loss_avg, cls_val_Accuracy, each_total, count)
+    return (loss_avg, cls_val_Accuracy, acc_for_each, count, balance, mean_balance)
+
+def test(test_loader, model, criterion):
+    bar = Bar('Testing', max=len(test_loader))
+
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+
+    model.eval()
+
+    balance = [0] * 40
+    with torch.no_grad():
+        end = time.time()
+        val_total = 0.0
+        val_correct = 0.0
+        acc_for_each =  torch.zeros(40, device='cuda:0')
+        for i, (input, target, id_target) in enumerate(test_loader):
+            # measure data loading time
+            data_time.update(time.time() - end)
+
+            input = input.cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
+
+            # compute output
+            # output = model(input)
+            output_0, output_1, output_2, output_3 = model.forward(input)
+            output_0 = output_0.view(-1, 2, 13)
+            output_1 = output_1.view(-1, 2, 6)
+            output_2 = output_2.view(-1, 2, 9)
+            output_3 = output_3.view(-1, 2, 12)
+            output = torch.cat([output_0, output_1, output_2, output_3], 2)
+
+            # measure accuracy and record loss
+            loss = 0.0
+            loss_attr = [0.0 for i in range(40)]
+            for k in range(40):
+                loss_attr[k] += criterion(output[:, :, k], target[:, k])
+                loss += loss_attr[k]
+
+            # 加入LC-loss
+            lc_loss = 0.0
+            for u in range(len(id_target)):
+                for v in range(u + 1, len(id_target)):
+                    if id_target[u] == id_target[v]:
+                        lc_loss += torch.sum(
+                            (output[u, :, :] - output[v, :, :])**2)
+            lc_loss /= 1560  # N*(N-1)，本例中就是40*39=1560
+            loss += lc_loss
+            loss = loss.requires_grad_()
+            _, pred = torch.max(output, 1)
+
+
+            # 计算平衡准确率
+            balance_tmp = [0] * 40
+            for iii in range(40):
+                balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
+
+            if sum(balance) == 0:
+                balance = torch.Tensor(balance_tmp)
+            else:
+                balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
+            mean_balance = torch.mean(balance)
+
+            correct_single = torch.sum(pred == target, 0,
+                                       dtype=torch.float32) / output.size(0)
+            # 所有属性的平均准确率
+            if i == 0:
+                acc_for_each = correct_single
+            else:
+                acc_for_each = (acc_for_each + correct_single) / 2
+
+            val_correct += torch.sum(pred == target, dtype=torch.float32).item(
+            ) / 40.0  # num_classes need you to define
+
+            val_total += output.size(0)
+            cls_val_Accuracy = val_correct / val_total
+            loss_avg = sum(loss_attr) / len(loss_attr)
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
+                'mbAcc: {mbAcc: .5f}'.format(
+                batch=i + 1,
+                size=len(test_loader),
+                data=data_time.avg,
+                bt=batch_time.avg,
+                total=bar.elapsed_td,
+                eta=bar.eta_td,
+                loss=loss_avg,
+                mbAcc=mean_balance
+            )
+            bar.next()
+    bar.finish()
+    # 统计每个属性的**平均**准确率
+    rank(balance,'test_BAcc')
+    rank(acc_for_each,'test_Acc')
+    print('Averaged balanced Accuracy (testing): ',torch.mean(balance).item())
+
+    return (loss_avg, cls_val_Accuracy, acc_for_each, balance, mean_balance)
 
 
 def save_checkpoint(state,
@@ -638,10 +727,10 @@ def adjust_learning_rate(optimizer, epoch):
         elif epoch == 2:
             lr=args.lr
         if epoch in args.schedule:
-            lr *= args.gamma            
+            lr *= args.gamma
     else:
         raise ValueError('Unknown lr mode {}'.format(args.lr_decay))
-    
+
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
@@ -660,6 +749,28 @@ def weight_init(m):
     elif isinstance(m, nn.BatchNorm2d):
         nn.init.constant_(m.weight, 1)
         nn.init.constant_(m.bias, 0)
+
+def rank(input, mode):
+    input = list(input.numpy())
+    w = open(os.path.join(args.checkpoints, mode + '.txt'))
+    if mode.startswith('A'):
+        with open('./origin.txt') as f:
+            line = f.readline()
+            i = 0
+            while line:
+                line = line.split()
+                aine = list(map(float, line[1:]))
+                aine.append(input[i])
+                order = aine.index(input[i])
+                w.writelines(line + ' ' + str(100 * (1 - input[i])) + ' ' +
+                            str(input[i]) + ' ' + str(order))
+                i += 1
+    else:
+        for i in range(len(input)):
+            w.writelines(label_list[i] + ': ' + str(100 * (1 - input[i])) +
+                         ' ' + str(input[i]))
+    w.close()
+
 
 
 if __name__ == '__main__':
