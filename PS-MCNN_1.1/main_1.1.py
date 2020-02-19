@@ -769,8 +769,6 @@ def rank(input, mode):
                             str(input[i]) + ' ' + str(order)+'\n')
                 sline = f.readline()
                 i += 1
-                if (i==40):
-                    print(sline)
     else:
         for i in range(len(input)):
             w.writelines(label_list[i] + ': ' + str(100 * (1 - input[i])) +
