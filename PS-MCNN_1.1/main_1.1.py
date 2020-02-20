@@ -762,12 +762,12 @@ def rank(input, mode):
                 aine.append(100 * (1 - input[i]))
                 aine = sorted(aine)
                 order = aine.index(100 * (1 - input[i]))
-                w.writelines(sline[:-1] + ' | ' + str(round(100 * (1 - input[i]),2)) + ' | ' +str(round(input[i],2)) + ' | #' + str(order)+'\n')
+                w.writelines(sline[:-1] + ' | ' + str(round(100 * (1 - input[i]),2)) + ' | ' +str(round(input[i],4)) + ' | #' + str(order)+'\n')
                 sline = f.readline()
                 i += 1
     else:
         for i in range(len(input)):
-            w.writelines(label_list[i] + ': ' + str(round(100 * (1 - input[i]),3)) +' ' + str(round(input[i],3))+'\n')
+            w.writelines(label_list[i] + ': ' + str(round(100 * (1 - input[i]),4)) +' ' + str(round(input[i],4))+'\n')
     w.close()
 
 
