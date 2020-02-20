@@ -761,7 +761,7 @@ def rank(input, mode):
                 aine = list(map(float, line[1:]))
                 aine.append(100 * (1 - input[i]))
                 aine = sorted(aine)
-                order = aine.index(100 * (1 - input[i]))
+                order = aine.index(100 * (1 - input[i])) + 1
                 w.writelines(sline[:-1] + ' | ' + str(round(100 * (1 - input[i]),2)) + ' | ' +str(round(input[i],4)) + ' | #' + str(order)+'\n')
                 sline = f.readline()
                 i += 1

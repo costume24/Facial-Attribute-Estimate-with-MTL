@@ -13,4 +13,7 @@ PS-MCNN_1\.1/utils/
 PS-MCNN_1\.1/models/__pycache__/
 
 PS-MCNN_1\.1/models/
-*/checkpoints*/
+*/.vscode/
+*/_pycache_/
+*/checkpoints_*/
+
