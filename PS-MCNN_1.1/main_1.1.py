@@ -594,8 +594,9 @@ def validate(val_loader, model, criterion, writer, count, epoch):
         b_acc_dic[label_list[ii]] = balance[ii]
     b_acc_dic['Ave.']=torch.mean(balance).item()
     writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
-
-    make_confusion_matrix(y_true, y_pred)
+            
+    if epoch == args.epochs - 1:
+        make_confusion_matrix(y_true, y_pred)
     return (loss_avg, cls_val_Accuracy, acc_for_each, count, balance, mean_balance)
 
 def test(test_loader, model, criterion):
@@ -782,7 +783,7 @@ def make_confusion_matrix(y_true,y_pred):
     for label_col in range(len(label_list)):
         y_true_label = y_true[:, label_col]
         y_pred_label = y_pred[:, label_col]
-        conf_mat_dict[labels[label_col]] = confusion_matrix(y_pred=y_pred_label, y_true=y_true_label)
+        conf_mat_dict[label_list[label_col]] = confusion_matrix(y_pred=y_pred_label, y_true=y_true_label)
 
     with open('./confusion.txt', 'w') as f:
         for label, matrix in conf_mat_dict.items():
