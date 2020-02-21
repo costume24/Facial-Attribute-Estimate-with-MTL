@@ -24,7 +24,7 @@ import torchvision.datasets as datasets
 import torch.nn.functional as F
 import models
 from math import cos, pi
-from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import balanced_accuracy_score, confusion_matrix
 
 # from prefetch_generator import BackgroundGenerator
 from celeba import CelebA, TensorSampler, data_prefetcher
@@ -359,6 +359,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
 
     end = time.time()
 
+
+    
     train_total = 0.0
     train_correct = 0.0
     acc_for_each =  torch.zeros(40, device='cuda:0')
@@ -418,7 +420,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
                 (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
 
         compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
-
         # 计算平衡准确率
         balance_tmp = [0] * 40
         for iii in range(40):
@@ -429,6 +430,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         else:
             balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
         mean_balance = torch.mean(balance)
+
         # 每个属性在当前batch的准确率
         correct_single = compare_result / output.size(0)  # (?,40)
 
@@ -491,7 +493,9 @@ def validate(val_loader, model, criterion, writer, count, epoch):
     data_time = AverageMeter()
 
     model.eval()
-
+    # make confusion matrix
+    y_true = []
+    y_pred = []
     balance = [0] * 40
     with torch.no_grad():
         end = time.time()
@@ -544,7 +548,9 @@ def validate(val_loader, model, criterion, writer, count, epoch):
             else:
                 balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
             mean_balance = torch.mean(balance)
-
+            if epoch == args.epochs - 1:
+                y_true = target
+                y_pred = pred
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
             # 所有属性的平均准确率
@@ -589,7 +595,7 @@ def validate(val_loader, model, criterion, writer, count, epoch):
     b_acc_dic['Ave.']=torch.mean(balance).item()
     writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
 
-
+    make_confusion_matrix(y_true, y_pred)
     return (loss_avg, cls_val_Accuracy, acc_for_each, count, balance, mean_balance)
 
 def test(test_loader, model, criterion):
@@ -770,6 +776,19 @@ def rank(input, mode):
             w.writelines(label_list[i] + ': ' + str(round(100 * (1 - input[i]),4)) +' ' + str(round(input[i],4))+'\n')
     w.close()
 
+def make_confusion_matrix(y_true,y_pred):
+    conf_mat_dict={}
+
+    for label_col in range(len(label_list)):
+        y_true_label = y_true[:, label_col]
+        y_pred_label = y_pred[:, label_col]
+        conf_mat_dict[labels[label_col]] = confusion_matrix(y_pred=y_pred_label, y_true=y_true_label)
+
+    with open('./confusion.txt', 'w') as f:
+        for label, matrix in conf_mat_dict.items():
+            f.writelines("Confusion matrix for label {}:\n".format(label))
+            f.writelines(str(matrix)+'\n')
+            f.writelines('==============================\n')
 
 class BCEFocalLoss(torch.nn.Module):
     """
