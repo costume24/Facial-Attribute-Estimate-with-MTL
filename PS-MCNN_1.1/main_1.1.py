@@ -779,7 +779,9 @@ def rank(input, mode):
 
 def make_confusion_matrix(y_true,y_pred):
     conf_mat_dict={}
-
+    y_true = y_true.cpu()
+    y_pred = y_pred.cpu()
+    
     for label_col in range(len(label_list)):
         y_true_label = y_true[:, label_col]
         y_pred_label = y_pred[:, label_col]
