@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from cbam import *
+from .cbam import *
 # if torch.cuda.is_available():
 #     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
