@@ -18,6 +18,7 @@ def conv_1x1_bn(inp, oup):
 class psnet(nn.Module):
     def __init__(self, use_1x1=True, ratio=0.25, num_attributes=40, input_size=224):
         super().__init__()
+        self.use_1x1 = use_1x1
         self.pool = nn.MaxPool2d(2, 2)
         self.t_conv = nn.ModuleList()  # (4,5),每一行是一个t支路的5个卷积层
         self.s_conv = nn.ModuleList([
