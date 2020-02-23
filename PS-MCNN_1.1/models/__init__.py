@@ -7,5 +7,7 @@ from .psmcnn_se_1 import *
 from .psmcnn_se_2 import *
 from .psmcnn_se_3 import *
 from .psmcnn_se_4 import *
+from .cbam import *
+from .psmcnn_cbam_1 import *
 
 
