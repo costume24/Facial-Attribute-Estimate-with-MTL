@@ -9,7 +9,12 @@ def conv_3x3_bn(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
                          nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
 
-
+def conv_1x1_bn(inp, oup):
+    return nn.Sequential(
+        nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+        nn.BatchNorm2d(oup),
+        nn.ReLU6(inplace=True)
+    )
 class psnet(nn.Module):
     def __init__(self, use_1x1=True, ratio=0.25, num_attributes=40, input_size=224):
         super().__init__()
