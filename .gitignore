@@ -10,8 +10,6 @@ PS-MCNN_1\.1/checkpoints_2020-02-18_00-05-39/
 
 PS-MCNN_1\.1/utils/
 
-PS-MCNN_1\.1/models/__pycache__/
-
 */.vscode/
 */_pycache_/
 */checkpoints_*/

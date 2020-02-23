@@ -3,6 +3,7 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 
+__all__ = ['CBAM']
 class BasicConv(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0, dilation=1, groups=1, relu=True, bn=True, bias=False):
         super(BasicConv, self).__init__()
@@ -64,6 +65,7 @@ def logsumexp_2d(tensor):
     s, _ = torch.max(tensor_flatten, dim=2, keepdim=True)
     outputs = s + (tensor_flatten - s).exp().sum(dim=2, keepdim=True).log()
     return outputs
+
 
 class ChannelPool(nn.Module):
     def forward(self, x):

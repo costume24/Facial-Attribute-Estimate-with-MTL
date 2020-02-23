@@ -1,12 +1,8 @@
 import torch
 import torch.nn as nn
-import resnet
-import psmcnn_se_1
-import cbam
-
+from cbam import *
 # if torch.cuda.is_available():
 #     torch.set_default_tensor_type('torch.cuda.FloatTensor')
-
 
 def conv_3x3_bn(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
