@@ -96,7 +96,8 @@ parser.add_argument('--weight-decay',
                     type=float,
                     metavar='W',
                     help='weight decay (default: 1e-4)')
-parser.add_argument('--focal',default=True,type=bool)
+parser.add_argument('--focal', default=True, type=bool)
+parser.add_argument('--use1x1',default=True,type=bool)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -171,7 +172,7 @@ def main():
     title = 'CelebA-psmcnn'
     # create model
     if args.version == 1:
-        model = models.psmcnn_se_1.psnet().to(device)
+        model = models.psmcnn_se_1.psnet(args.use_1x1).to(device)
         title = 'CelebA-psmcnn-1'
     elif args.version == 2:
         model = models.psmcnn_se_2.psnet().to(device)
@@ -360,7 +361,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     end = time.time()
 
 
-    
+
     train_total = 0.0
     train_correct = 0.0
     acc_for_each =  torch.zeros(40, device='cuda:0')
@@ -594,7 +595,7 @@ def validate(val_loader, model, criterion, writer, count, epoch):
         b_acc_dic[label_list[ii]] = balance[ii]
     b_acc_dic['Ave.']=torch.mean(balance).item()
     writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
-            
+
     if epoch == args.epochs - 1:
         make_confusion_matrix(y_true, y_pred)
     return (loss_avg, cls_val_Accuracy, acc_for_each, count, balance, mean_balance)
@@ -781,7 +782,7 @@ def make_confusion_matrix(y_true,y_pred):
     conf_mat_dict={}
     y_true = y_true.cpu()
     y_pred = y_pred.cpu()
-    
+
     for label_col in range(len(label_list)):
         y_true_label = y_true[:, label_col]
         y_pred_label = y_pred[:, label_col]
