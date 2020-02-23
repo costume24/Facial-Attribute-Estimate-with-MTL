@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import resnet
+import psmcnn_se_1
 import cbam
 
 # if torch.cuda.is_available():
