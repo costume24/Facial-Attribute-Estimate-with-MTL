@@ -9,7 +9,12 @@ def conv_3x3_bn(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
                          nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
 
-
+def conv_1x1_bn(inp, oup):
+    return nn.Sequential(
+        nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+        nn.BatchNorm2d(oup),
+        nn.ReLU6(inplace=True)
+    )
 class psnet(nn.Module):
     def __init__(self,
                  use_1x1=True,
@@ -34,10 +39,10 @@ class psnet(nn.Module):
         self.conv_1x1 = nn.ModuleList() # (4,4)，用1x1卷积进行降维，取代原来的取前32个通道
         for _ in range(4):
             tmp = nn.ModuleList([
-                nn.Conv2d(32, 32, 1, 1, 0, bias=False),
-                nn.Conv2d(64, 32, 1, 1, 0, bias=False),
-                nn.Conv2d(128, 32, 1, 1, 0, bias=False),
-                nn.Conv2d(256, 32, 1, 1, 0, bias=False)
+                conv_1x1_bn(32, 32),
+                conv_1x1_bn(64, 32),
+                conv_1x1_bn(128, 32),
+                conv_1x1_bn(256, 32)
             ])
             self.conv_1x1.append(tmp)
         for _ in range(4):
@@ -143,7 +148,7 @@ class psnet(nn.Module):
                 t_1 = torch.cat([t_1, s_0], 1)
                 t_2 = torch.cat([t_2, s_0], 1)
                 t_3 = torch.cat([t_3, s_0], 1)
-                
+
                 s_0 = torch.cat(
                     [t_0_partial, t_1_partial, t_2_partial, t_3_partial, s_0], 1)
             else:
