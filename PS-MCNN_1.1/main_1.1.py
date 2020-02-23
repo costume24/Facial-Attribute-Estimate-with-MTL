@@ -172,7 +172,7 @@ def main():
     title = 'CelebA-psmcnn'
     # create model
     if args.version == 1:
-        model = models.psmcnn_se_1.psnet(args.use_1x1).to(device)
+        model = models.psmcnn_se_1.psnet(args.use1x1).to(device)
         title = 'CelebA-psmcnn-1'
     elif args.version == 2:
         model = models.psmcnn_se_2.psnet().to(device)
