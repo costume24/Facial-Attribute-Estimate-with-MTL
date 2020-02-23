@@ -15,4 +15,5 @@ PS-MCNN_1\.1/models/__pycache__/
 */.vscode/
 */_pycache_/
 */checkpoints_*/
+*.json
 
