@@ -11,7 +11,7 @@ def conv_3x3_bn(inp, oup, stride=1):
 
 
 class psnet(nn.Module):
-    def __init__(self, ratio=0.25, num_attributes=40, input_size=224):
+    def __init__(self, use_1x1=True, ratio=0.25, num_attributes=40, input_size=224):
         super().__init__()
         self.pool = nn.MaxPool2d(2, 2)
         self.t_conv = nn.ModuleList()  # (4,5),每一行是一个t支路的5个卷积层
@@ -26,6 +26,16 @@ class psnet(nn.Module):
         self.s_fc = nn.ModuleList([nn.Linear(3840, 512),
                                    nn.Linear(512, 512)])  # (2,)，s支路的2个FC层
         self.output = []  # (4,), 4个支路的输出
+        self.conv_1x1 = nn.ModuleList() # (4,4)，用1x1卷积进行降维，取代原来的取前32个通道
+        for _ in range(4):
+            tmp = nn.ModuleList([
+                conv_1x1_bn(32, 32),
+                conv_1x1_bn(64, 32),
+                conv_1x1_bn(128, 32),
+                conv_1x1_bn(256, 32)
+            ])
+            self.conv_1x1.append(tmp)
+
         for _ in range(4):
             tmp = nn.ModuleList([
                 conv_3x3_bn(3, 32),
@@ -132,19 +142,32 @@ class psnet(nn.Module):
         s_0 = self.pool(s_0)
 
         if ind < 4:
-            t_0 = torch.cat([t_0, s_0], 1)
-            t_1 = torch.cat([t_1, s_0], 1)
-            t_2 = torch.cat([t_2, s_0], 1)
-            t_3 = torch.cat([t_3, s_0], 1)
+            if not self.use_1x1:
+                indices = torch.arange(0, 32, 1).cuda()
+                t_0_partial = torch.index_select(t_0, 1, indices).cuda()
+                t_1_partial = torch.index_select(t_1, 1, indices).cuda()
+                t_2_partial = torch.index_select(t_2, 1, indices).cuda()
+                t_3_partial = torch.index_select(t_3, 1, indices).cuda()
 
-            indices = torch.arange(0, 32, 1).cuda()
-            t_0_partial = torch.index_select(t_0, 1, indices).cuda()
-            t_1_partial = torch.index_select(t_1, 1, indices).cuda()
-            t_2_partial = torch.index_select(t_2, 1, indices).cuda()
-            t_3_partial = torch.index_select(t_3, 1, indices).cuda()
-            s_0 = torch.cat(
-                [t_0_partial, t_1_partial, t_2_partial, t_3_partial, s_0], 1)
+                t_0 = torch.cat([t_0, s_0], 1)
+                t_1 = torch.cat([t_1, s_0], 1)
+                t_2 = torch.cat([t_2, s_0], 1)
+                t_3 = torch.cat([t_3, s_0], 1)
+                
+                s_0 = torch.cat(
+                    [t_0_partial, t_1_partial, t_2_partial, t_3_partial, s_0], 1)
+            else:
+                t_0_1x1 = self.conv_1x1[0][ind](t_0)
+                t_1_1x1 = self.conv_1x1[1][ind](t_1)
+                t_2_1x1 = self.conv_1x1[2][ind](t_2)
+                t_3_1x1 = self.conv_1x1[3][ind](t_3)
 
+                t_0 = torch.cat([t_0, s_0], 1)
+                t_1 = torch.cat([t_1, s_0], 1)
+                t_2 = torch.cat([t_2, s_0], 1)
+                t_3 = torch.cat([t_3, s_0], 1)     
+
+                s_0 = torch.cat([t_0_1x1, t_1_1x1, t_2_1x1, t_3_1x1, s_0], 1)
         return [t_0, t_1, t_2, t_3], s_0
 
 
