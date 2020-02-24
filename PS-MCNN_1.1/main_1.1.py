@@ -788,7 +788,7 @@ def make_confusion_matrix(y_true,y_pred):
         y_pred_label = y_pred[:, label_col]
         conf_mat_dict[label_list[label_col]] = confusion_matrix(y_pred=y_pred_label, y_true=y_true_label)
 
-    with open(os.path.join(agrs.checkpoint,'confusion.txt'), 'w') as f:
+    with open(os.path.join(args.checkpoint,'confusion.txt'), 'w') as f:
         for label, matrix in conf_mat_dict.items():
             f.writelines("Confusion matrix for label {}:\n".format(label))
             f.writelines(str(matrix)+'\n')
