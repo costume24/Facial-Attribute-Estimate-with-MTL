@@ -238,7 +238,6 @@ def main():
 
     cudnn.benchmark = True
 
-    # Data loading code
     # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     normalize = transforms.Normalize(mean=[0.383, 0.426, 0.506],
                                      std=[0.290, 0.290, 0.311])
@@ -371,6 +370,10 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     stage = 0
     if epoch >= 10:
         stage = 0
+    tp = 0.0
+    tn = 0.0
+    fp = 0.0
+    fn = 0.0
     for i, (input, target, id_target) in enumerate(train_loader):
 
         # measure data loading time
@@ -412,6 +415,14 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         loss += lc_loss
         loss = loss.requires_grad_()
         _, pred = torch.max(output, 1)  # (?,40)
+        conf = (confusion_matrix(
+            target.view(-1).cpu().numpy(),
+            pred.view(-1).cpu().numpy())).ravel()
+
+        tn = tn + conf[0]
+        fp = fp + conf[1]
+        fn = fn + conf[2]
+        tp = tp + conf[3]
         # loss的加权
         max_loss = max(loss_attr)
         min_loss = min(loss_attr)
@@ -477,6 +488,11 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         )
         bar.next()
     bar.finish()
+    p = tp / (tp + fp)
+    r = tp / (tp + fn)
+    f2 = 5 * p * r / (4 * p + r)
+    with open(os.path.join(args.checkpoint,'f2-train.txt'), 'w') as f:
+        f.writelines(str(round(f2,4))+'\n')
     # 统计每个属性的**平均**准确率
     b_acc_dic = {}
     for ii in range(40):
@@ -494,10 +510,12 @@ def validate(val_loader, model, criterion, writer, count, epoch):
     data_time = AverageMeter()
 
     model.eval()
-    # make confusion matrix
-    y_true = []
-    y_pred = []
+
     balance = [0] * 40
+    tp = 0.0
+    tn = 0.0
+    fp = 0.0
+    fn = 0.0
     with torch.no_grad():
         end = time.time()
         val_total = 0.0
@@ -537,7 +555,14 @@ def validate(val_loader, model, criterion, writer, count, epoch):
             loss += lc_loss
             loss = loss.requires_grad_()
             _, pred = torch.max(output, 1)
+            conf = (confusion_matrix(
+                target.view(-1).cpu().numpy(),
+                pred.view(-1).cpu().numpy())).ravel()
 
+            tn = tn + conf[0]
+            fp = fp + conf[1]
+            fn = fn + conf[2]
+            tp = tp + conf[3]
 
             # 计算平衡准确率
             balance_tmp = [0] * 40
@@ -549,9 +574,7 @@ def validate(val_loader, model, criterion, writer, count, epoch):
             else:
                 balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
             mean_balance = torch.mean(balance)
-            if epoch == args.epochs - 1:
-                y_true = target
-                y_pred = pred
+
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
             # 所有属性的平均准确率
@@ -589,6 +612,12 @@ def validate(val_loader, model, criterion, writer, count, epoch):
             )
             bar.next()
     bar.finish()
+    p = tp / (tp + fp)
+    r = tp / (tp + fn)
+    f2 = 5 * p * r / (4 * p + r)
+    with open(os.path.join(args.checkpoint,'f2-val.txt'), 'w') as f:
+        f.writelines(str(round(f2,4))+'\n')
+
     # 统计每个属性的**平均**准确率
     b_acc_dic = {}
     for ii in range(40):
@@ -596,8 +625,6 @@ def validate(val_loader, model, criterion, writer, count, epoch):
     b_acc_dic['Ave.']=torch.mean(balance).item()
     writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
 
-    if epoch == args.epochs - 1:
-        make_confusion_matrix(y_true, y_pred)
     return (loss_avg, cls_val_Accuracy, acc_for_each, count, balance, mean_balance)
 
 def test(test_loader, model, criterion):
