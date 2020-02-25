@@ -492,7 +492,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     r = tp / (tp + fn)
     f2 = 5 * p * r / (4 * p + r)
     with open(os.path.join(args.checkpoint,'f2-train.txt'), 'w') as f:
-        f.writelines(str(round(f2,4))+'\n')
+        f.writelines('tp: {:<7d}|tn: {:<7d}|fp: {:<7d}|fn: {:<7d}|p: {:.4f}|r: {:.4f}|f2: {:.4f}\n')
     # 统计每个属性的**平均**准确率
     b_acc_dic = {}
     for ii in range(40):
@@ -616,7 +616,7 @@ def validate(val_loader, model, criterion, writer, count, epoch):
     r = tp / (tp + fn)
     f2 = 5 * p * r / (4 * p + r)
     with open(os.path.join(args.checkpoint,'f2-val.txt'), 'w') as f:
-        f.writelines(str(round(f2,4))+'\n')
+        f.writelines('tp: {:<7d}|tn: {:<7d}|fp: {:<7d}|fn: {:<7d}|p: {:.4f}|r: {:.4f}|f2: {:.4f}\n')
 
     # 统计每个属性的**平均**准确率
     b_acc_dic = {}
