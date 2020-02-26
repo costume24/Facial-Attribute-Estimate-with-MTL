@@ -492,7 +492,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     r = tp / (tp + fn)
     f2 = 5 * p * r / (4 * p + r)
     with open(os.path.join(args.checkpoint,'f2-train.txt'), 'w') as f:
-        f.writelines('tp: {:<7d}|tn: {:<7d}|fp: {:<7d}|fn: {:<7d}|p: {:.4f}|r: {:.4f}|f2: {:.4f}\n'.format(tp,tn,fp,fn,p,r,f2))
+        f.writelines('tp: {:<7d}|tn: {:<7d}|fp: {:<7d}|fn: {:<7d}|p: {:.4f}|r: {:.4f}|f2: {:.4f}\n'.format(int(tp),int(tn),int(fp),int(fn),p,r,f2))
     # 统计每个属性的**平均**准确率
     b_acc_dic = {}
     for ii in range(40):
