@@ -187,7 +187,8 @@ def main():
         model = models.psmcnn_cbam_1.psnet().to(device)
     elif args.version == 6:
         model = models.psmcnn_cbam_2.psnet().to(device)
-
+    elif args.version == 7:
+        model = models.psmcnn_cbam_3.psnet().to(device)    
     data_path = ''
     if args.place == 'deepai':
         data_path = '/root/OneDrive/DataSets/CelebA/'
