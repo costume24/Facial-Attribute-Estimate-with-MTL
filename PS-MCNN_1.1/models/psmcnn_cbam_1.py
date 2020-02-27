@@ -26,7 +26,15 @@ class psnet(nn.Module):
         self.s_fc = nn.ModuleList([nn.Linear(3840, 512),
                                    nn.Linear(512, 512)])  # (2,)，s支路的2个FC层
         self.output = []  # (4,), 4个支路的输出
-        self.conv_1x1 = nn.ModuleList() # (4,4)
+        self.conv_1x1 = nn.ModuleList() # (4,4)，用1x1卷积进行降维，取代原来的取前32个通道
+        for _ in range(4):
+            tmp = nn.ModuleList([
+                conv_1x1_bn(32, 32),
+                conv_1x1_bn(64, 32),
+                conv_1x1_bn(128, 32),
+                conv_1x1_bn(256, 32)
+            ])
+            self.conv_1x1.append(tmp)
         for _ in range(4):
             tmp = nn.ModuleList([
                 conv_3x3_bn(3, 32),
