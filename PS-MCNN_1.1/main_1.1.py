@@ -97,7 +97,7 @@ parser.add_argument('--weight-decay',
                     metavar='W',
                     help='weight decay (default: 1e-4)')
 parser.add_argument('--focal', default=True, type=bool)
-parser.add_argument('--use1x1',default=True,type=bool)
+parser.add_argument('--use1x1', default=True, type=bool)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -183,6 +183,8 @@ def main():
     elif args.version == 4:
         model = models.psmcnn_se_4.psnet().to(device)
         title = 'CelebA-psmcnn-4'
+    elif args.version == 5:
+        model = models.psmcnn_cbam_1.psnet().to(device)
 
     data_path = ''
     if args.place == 'deepai':
@@ -785,6 +787,7 @@ def weight_init(m):
 
 def rank(input, mode):
     input = list(input.cpu().numpy())
+    orders = [0] * 6
     w = open(os.path.join(args.checkpoint, mode + '.txt'),'w')
     if mode.startswith('A'):
         with open('./origin.txt') as f:
@@ -796,9 +799,12 @@ def rank(input, mode):
                 aine.append(100 * (1 - input[i]))
                 aine = sorted(aine)
                 order = aine.index(100 * (1 - input[i])) + 1
+                orders[order - 1] += 1
                 w.writelines(sline[:-1] + ' | ' + str(round(100 * (1 - input[i]),2)) + ' | ' +str(round(input[i],4)) + ' | #' + str(order)+'\n')
                 sline = f.readline()
                 i += 1
+            for j in range(6):
+                w.writelines('{}st: {}'.format(j+1,orders[j]))
     else:
         for i in range(len(input)):
             w.writelines(label_list[i] + ': ' + str(round(100 * (1 - input[i]),4)) +' ' + str(round(input[i],4))+'\n')
