@@ -807,7 +807,7 @@ def rank(input, mode):
                 sline = f.readline()
                 i += 1
             for j in range(6):
-                w.writelines('{}st: {}'.format(j+1,orders[j]))
+                w.writelines('{}st: {}\n'.format(j+1,orders[j]))
     else:
         for i in range(len(input)):
             w.writelines(label_list[i] + ': ' + str(round(100 * (1 - input[i]),4)) +' ' + str(round(input[i],4))+'\n')
