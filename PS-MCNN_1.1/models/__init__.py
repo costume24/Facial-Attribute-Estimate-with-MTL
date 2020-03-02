@@ -11,5 +11,6 @@ from .cbam import *
 from .psmcnn_cbam_1 import *
 from .psmcnn_cbam_2 import *
 from .psmcnn_cbam_3 import *
+from .psmcnn_baseline import *
 
 

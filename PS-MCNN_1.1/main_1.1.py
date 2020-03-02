@@ -44,7 +44,7 @@ parser.add_argument('-j',
                     help='number of data loading workers (default: 4)')
 # Optimization options
 parser.add_argument('--epochs',
-                    default=20,
+                    default=30,
                     type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch',
@@ -52,16 +52,16 @@ parser.add_argument('--start-epoch',
                     type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--train-batch',
-                    default=32,
+                    default=64,
                     type=int,
                     help='train batchsize (default: 256)')
 parser.add_argument('--test-batch',
-                    default=32,
+                    default=64,
                     type=int,
                     help='test batchsize (default: 200)')
 parser.add_argument('--lr',
                     '--learning-rate',
-                    default=1e-3,
+                    default=5e-4,
                     type=float,
                     help='initial learning rate')
 parser.add_argument('--lr-decay',
@@ -98,6 +98,7 @@ parser.add_argument('--weight-decay',
                     help='weight decay (default: 1e-4)')
 parser.add_argument('--focal', default=True, type=bool)
 parser.add_argument('--use1x1', default=True, type=bool)
+parser.add_argument('--prob',default=0.5,type=float)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -185,10 +186,16 @@ def main():
         title = 'CelebA-psmcnn-4'
     elif args.version == 5:
         model = models.psmcnn_cbam_1.psnet().to(device)
+        title = 'CelebA-psmcnn-5'
     elif args.version == 6:
         model = models.psmcnn_cbam_2.psnet().to(device)
+        title = 'CelebA-psmcnn-6'
     elif args.version == 7:
-        model = models.psmcnn_cbam_3.psnet().to(device)    
+        model = models.psmcnn_cbam_3.psnet().to(device)   
+        title = 'CelebA-psmcnn-7'
+    elif args.version == 0:
+        model = models.psmcnn_baseline.psnet().to(device) 
+        title = 'CelebA-psmcnn-0'
     data_path = ''
     if args.place == 'deepai':
         data_path = '/root/OneDrive/DataSets/CelebA/'
@@ -255,6 +262,7 @@ def main():
             transforms.RandomCrop((160, 192)),
             transforms.ToTensor(),
             normalize,
+            RandomErasing(args.prob),
         ]))
     val_dataset = CelebA(
         data_path, 'list_attr_celeba_val.txt', 'identity_CelebA_val.txt',
@@ -855,7 +863,50 @@ class BCEFocalLoss(torch.nn.Module):
                                                   t,
                                                   w.detach_(),
                                                   reduction=self.reduction)
+class RandomErasing(object):
+    '''
+    Class that performs Random Erasing in Random Erasing Data Augmentation by Zhong et al. 
+    -------------------------------------------------------------------------------------
+    probability: The probability that the operation will be performed.
+    sl: min erasing area
+    sh: max erasing area
+    r1: min aspect ratio
+    mean: erasing value
+    -------------------------------------------------------------------------------------
+    '''
+    def __init__(self, probability = 0.5, sl = 0.02, sh = 0.4, r1 = 0.3, mean=[0.383, 0.426, 0.506]):
+        self.probability = probability
+        self.mean = mean
+        self.sl = sl
+        self.sh = sh
+        self.r1 = r1
+       
+    def __call__(self, img):
 
+        if random.uniform(0, 1) > self.probability:
+            return img
+
+        for attempt in range(100):
+            area = img.size()[1] * img.size()[2]
+       
+            target_area = random.uniform(self.sl, self.sh) * area
+            aspect_ratio = random.uniform(self.r1, 1/self.r1)
+
+            h = int(round(math.sqrt(target_area * aspect_ratio)))
+            w = int(round(math.sqrt(target_area / aspect_ratio)))
+
+            if w < img.size()[2] and h < img.size()[1]:
+                x1 = random.randint(0, img.size()[1] - h)
+                y1 = random.randint(0, img.size()[2] - w)
+                if img.size()[0] == 3:
+                    img[0, x1:x1+h, y1:y1+w] = self.mean[0]
+                    img[1, x1:x1+h, y1:y1+w] = self.mean[1]
+                    img[2, x1:x1+h, y1:y1+w] = self.mean[2]
+                else:
+                    img[0, x1:x1+h, y1:y1+w] = self.mean[0]
+                return img
+
+        return img
 
 if __name__ == '__main__':
     main()
