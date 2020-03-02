@@ -194,7 +194,7 @@ def main():
         model = models.psmcnn_cbam_3.psnet().to(device)   
         title = 'CelebA-psmcnn-7'
     elif args.version == 0:
-        model = models.psmcnn_baseline.psnet().to(device) 
+        model = models.psmcnn_baseline.psnet().to(device)
         title = 'CelebA-psmcnn-0'
     data_path = ''
     if args.place == 'deepai':
