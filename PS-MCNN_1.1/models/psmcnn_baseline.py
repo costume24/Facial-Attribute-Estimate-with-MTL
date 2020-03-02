@@ -72,7 +72,7 @@ class psnet(nn.Module):
             block_5[i] = self.t_fc[i][1](block_5[i])
 
         for _ in range(4):
-            self.output.append(block_5[i], 1)
+            self.output.append(block_5[i])
         for i in range(4):
             self.output[i] = self.group[i](self.output[i])
         output_0, output_1, output_2, output_3 = self.output
