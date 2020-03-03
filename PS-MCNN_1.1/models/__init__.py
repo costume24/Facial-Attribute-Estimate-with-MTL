@@ -12,5 +12,6 @@ from .psmcnn_cbam_1 import *
 from .psmcnn_cbam_2 import *
 from .psmcnn_cbam_3 import *
 from models.psmcnn_baseline import *
+from models.psmcnn_mtl import *
 
 

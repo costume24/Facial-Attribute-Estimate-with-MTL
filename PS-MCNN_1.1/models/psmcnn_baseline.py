@@ -23,22 +23,15 @@ class psnet(nn.Module):
                  input_size=224):
         super().__init__()
         self.pool = nn.MaxPool2d(2, 2)
-        self.t_conv = nn.ModuleList()  # (4,5),每一行是一个t支路的5个卷积层
-        self.t_fc = nn.ModuleList()  # (4,2)，每一行是一个t支路的2个FC层
-        self.output = []  # (4,), 4个支路的输出
-        for _ in range(4):
-            tmp = nn.ModuleList([
+        self.t_conv = nn.ModuleList([
                 conv_3x3_bn(3, 32),
                 conv_3x3_bn(32, 64),
                 conv_3x3_bn(64, 128),
                 conv_3x3_bn(128, 256),
                 conv_3x3_bn(256, 128)
-            ])
-            self.t_conv.append(tmp)
-
-        for _ in range(4):
-            tmp = nn.ModuleList([nn.Linear(3840, 512), nn.Linear(512, 512)])
-            self.t_fc.append(tmp)
+            ])  
+        self.t_fc = nn.ModuleList([nn.Linear(3840, 512), nn.Linear(512, 512)])
+        self.output = []  # (4,), 4个支路的输出
 
         self.group = nn.ModuleList([
             nn.Linear(512, 26),
@@ -50,8 +43,8 @@ class psnet(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, input):
-        self.output = []
-        block_1 = self.block([input, input, input, input], 0)
+        self.output = [0] *4
+        block_1 = self.block(input, 0)
 
         block_2= self.block(block_1, 1)
 
@@ -61,36 +54,21 @@ class psnet(nn.Module):
 
         block_5 = self.block(block_4, 4)
 
-        for i in range(4):
-            _size = block_5[i].size()
-            block_5[i] = block_5[i].view(-1, _size[1] * _size[2] * _size[3])
+        block_5 = block_5.view(-1, block_5.size()[1] * block_5.size()[2] * block_5.size()[3])
+
+        block_5 = self.t_fc[0](block_5)
+
+        block_5 = self.t_fc[1](block_5)
 
         for i in range(4):
-            block_5[i] = self.t_fc[i][0](block_5[i])
-
-        for i in range(4):
-            block_5[i] = self.t_fc[i][1](block_5[i])
-
-        for _ in range(4):
-            self.output.append(block_5[i])
-        for i in range(4):
-            self.output[i] = self.group[i](self.output[i])
+            self.output[i] = self.group[i](block_5)
         output_0, output_1, output_2, output_3 = self.output
         return output_0, output_1, output_2, output_3
 
     def block(self, inp, ind):
-        t_0, t_1, t_2, t_3 = inp
-        t_0 = self.t_conv[0][ind](t_0)
-        t_1 = self.t_conv[1][ind](t_1)
-        t_2 = self.t_conv[2][ind](t_2)
-        t_3 = self.t_conv[3][ind](t_3)
-
-        t_0 = self.pool(t_0)
-        t_1 = self.pool(t_1)
-        t_2 = self.pool(t_2)
-        t_3 = self.pool(t_3)
-
-        return [t_0, t_1, t_2, t_3]
+        inp = self.t_conv[ind](inp)
+        t_0 = self.pool(inp)
+        return t_0
 
 
 class SELayer(nn.Module):
