@@ -46,7 +46,8 @@ class psnet(nn.Module):
             conv_1x1_bn(32, 32),
             conv_1x1_bn(64, 32),
             conv_1x1_bn(128, 32),
-            conv_1x1_bn(256, 32)
+            conv_1x1_bn(256, 32),
+            conv_1x1_bn(128,32)
         ])
 
         self.group = nn.ModuleList([
