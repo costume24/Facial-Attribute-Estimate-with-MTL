@@ -96,7 +96,7 @@ parser.add_argument('--weight-decay',
                     type=float,
                     metavar='W',
                     help='weight decay (default: 1e-4)')
-parser.add_argument('--focal', default=True, type=bool)
+parser.add_argument('--focal', default='yes', type=str)
 parser.add_argument('--use1x1', default=True, type=bool)
 parser.add_argument('--prob',default=0.5,type=float)
 # Checkpoints
@@ -212,9 +212,13 @@ def main():
         data_path = '/home/mist/CelebA/'
     # model.apply(weight_init)
     # define loss function (criterion) and optimizer
-    criterion = nn.CrossEntropyLoss().cuda()
-    if args.focal:
+    if args.focal == 'yes':
+        print('=> Focal loss enabled')
         criterion = BCEFocalLoss().cuda()
+    else:
+        print('=> CrossEntrypy loss enabled')
+        criterion = nn.CrossEntropyLoss().cuda()
+
 
     # optimizer = torch.optim.SGD(model.parameters(),
     #                             args.lr,
@@ -408,7 +412,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         output_2 = output_2.view(-1, 2, 9)
         output_3 = output_3.view(-1, 2, 12)
         output = torch.cat([output_0, output_1, output_2, output_3], 2)
-
         # measure accuracy and record loss
         loss = 0.0
         loss_attr = [0.0 for i in range(40)]
@@ -419,7 +422,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
                 loss_attr[k] += criterion(output[:, :, k],
                                           target[:, k].long()) * weight[k]
             loss += loss_attr[k]
-
         # 加入LC-loss
         lc_loss = 0.0
         for u in range(len(id_target)):
