@@ -99,6 +99,7 @@ parser.add_argument('--weight-decay',
 parser.add_argument('--focal', default='yes', type=str)
 parser.add_argument('--use1x1', default=True, type=bool)
 parser.add_argument('--prob',default=0.5,type=float)
+parser.add_argument('--adaloss',default='no', type=str)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -388,8 +389,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     balance = [0] * 40
     weight = [1] * 40
     stage = 0
-    if epoch >= 10:
-        stage = 0
+    if args.adaloss == 'yes' and epoch >= 10:
+        stage = 1
     tp = 0.0
     tn = 0.0
     fp = 0.0
