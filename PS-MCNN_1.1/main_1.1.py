@@ -199,7 +199,7 @@ def main():
         model = models.psmcnn_baseline.psnet().to(device)
         title = 'CelebA-psmcnn-0'
     elif args.version == 8:
-        model = models.psmcnn_mtl.psnet(prelu=agrs.prelu).to(device)
+        model = models.psmcnn_mtl.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-8'       
     data_path = ''
     if args.place == 'deepai':
