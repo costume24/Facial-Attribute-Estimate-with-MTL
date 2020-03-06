@@ -100,6 +100,7 @@ parser.add_argument('--focal', default='yes', type=str)
 parser.add_argument('--use1x1', default=True, type=bool)
 parser.add_argument('--prob',default=0.5,type=float)
 parser.add_argument('--adaloss',default='no', type=str)
+parser.add_argument('--prelu',default='no',type=str)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -198,7 +199,7 @@ def main():
         model = models.psmcnn_baseline.psnet().to(device)
         title = 'CelebA-psmcnn-0'
     elif args.version == 8:
-        model = models.psmcnn_mtl.psnet().to(device)
+        model = models.psmcnn_mtl.psnet(prelu=agrs.prelu).to(device)
         title = 'CelebA-psmcnn-8'       
     data_path = ''
     if args.place == 'deepai':
