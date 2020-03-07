@@ -18,12 +18,12 @@ def conv_1x1_bn(inp, oup):
 
 def conv_3x3_bn_prelu(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-                         nn.BatchNorm2d(oup), nn.PReLU())
+                         nn.BatchNorm2d(oup), nn.RReLU())
 
 
 def conv_1x1_bn_prelu(inp, oup):
     return nn.Sequential(nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-                         nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
+                         nn.BatchNorm2d(oup), nn.RReLU())
 
 class psnet(nn.Module):
     def __init__(self,
