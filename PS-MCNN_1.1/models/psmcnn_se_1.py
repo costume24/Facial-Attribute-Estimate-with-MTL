@@ -23,7 +23,7 @@ def conv_3x3_bn_prelu(inp, oup, stride=1):
 
 def conv_1x1_bn_prelu(inp, oup):
     return nn.Sequential(nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-                         nn.BatchNorm2d(oup), nn.RReLU())
+                         nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
 
 class psnet(nn.Module):
     def __init__(self,
