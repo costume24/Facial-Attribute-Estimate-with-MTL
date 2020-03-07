@@ -66,10 +66,10 @@ class psnet(nn.Module):
         ])
         self.group = nn.ModuleList([
             nn.ModuleList([
-                nn.Linear(512, 512),
-                nn.Linear(512, 512),
-                nn.Linear(512, 512),
-                nn.Linear(512, 512)
+                nn.Linear(1024, 512),
+                nn.Linear(1024, 512),
+                nn.Linear(1024, 512),
+                nn.Linear(1024, 512)
             ]),
             nn.ModuleList([
                 nn.Linear(512, 26),
@@ -96,10 +96,13 @@ class psnet(nn.Module):
         s_5 = s_5.view(-1, s_5.size()[1] * s_5.size()[2] * s_5.size()[3])
 
         block_5 = self.t_fc[0](block_5)
-        # s_0_fc1 = self.s_fc[0](s_5)
+        s_0_fc1 = self.s_fc[0](s_5)
 
         block_5 = self.t_fc[1](block_5)
-        # s_0_fc2 = self.s_fc[1](s_0_fc1)
+        s_0_fc2 = self.s_fc[1](s_0_fc1)
+
+        for _ in range(4):
+            self.output.append(torch.cat([block_5[i], s_0_fc2], 1))
 
         for i in range(4):
             self.output[i] = self.group[0][i](block_5)
