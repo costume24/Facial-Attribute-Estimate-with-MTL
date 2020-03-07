@@ -81,7 +81,7 @@ class psnet(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, input):
-        self.output = [0] * 4
+        self.output = []
         block_1, s_1 = self.block(input, input, 0)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
@@ -101,8 +101,7 @@ class psnet(nn.Module):
         block_5 = self.t_fc[1](block_5)
         s_0_fc2 = self.s_fc[1](s_0_fc1)
 
-        for i in range(4):
-            self.output.append(torch.cat([block_5[i], s_0_fc2], 1))
+        block_5 = torch.cat([block_5, s_0_fc2], 1)
 
         for i in range(4):
             self.output[i] = self.group[0][i](block_5)
