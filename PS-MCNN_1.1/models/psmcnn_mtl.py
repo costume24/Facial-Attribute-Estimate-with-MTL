@@ -64,18 +64,20 @@ class psnet(nn.Module):
             conv1(256, 32),
             conv1(128,32)
         ])
-        self.group = nn.ModuleList([[
-            nn.Linear(512, 512),
-            nn.Linear(512, 512),
-            nn.Linear(512, 512),
-            nn.Linear(512, 512)
-        ],
-                                    [
-                                        nn.Linear(512, 26),
-                                        nn.Linear(512, 12),
-                                        nn.Linear(512, 18),
-                                        nn.Linear(512, 24)
-                                    ]])
+        self.group = nn.ModuleList([
+            nn.ModuleList([
+                nn.Linear(512, 512),
+                nn.Linear(512, 512),
+                nn.Linear(512, 512),
+                nn.Linear(512, 512)
+            ]),
+            nn.ModuleList([
+                nn.Linear(512, 26),
+                nn.Linear(512, 12),
+                nn.Linear(512, 18),
+                nn.Linear(512, 24)
+            ])
+        ])
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, input):
