@@ -85,10 +85,10 @@ class psnet(nn.Module):
                 nn.Linear(1024, 256)
             ]),
             nn.ModuleList([
-                nn.Linear(256, 26),
-                nn.Linear(256, 12),
-                nn.Linear(256, 18),
-                nn.Linear(256, 24)
+                nn.Linear(512, 26),
+                nn.Linear(512, 12),
+                nn.Linear(512, 18),
+                nn.Linear(512, 24)
             ])
         ])
 
@@ -138,8 +138,7 @@ class psnet(nn.Module):
         for i in range(4):
             self.output.append(torch.cat([block_5[i], s_0_fc2], 1))
         output_4 = torch.cat([s_0_fc2, s_0_fc2], 1)
-        for i in range(4):
-            self.output[i] = self.group[0][i](self.output[i])
+
         for i in range(4):
             self.output[i] = self.group[1][i](self.output[i])
         # a=torch.cat()
