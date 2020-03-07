@@ -81,7 +81,7 @@ class psnet(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, input):
-        self.output = []
+        self.output = [0] * 4
         block_1, s_1 = self.block(input, input, 0)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
