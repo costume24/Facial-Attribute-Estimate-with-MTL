@@ -101,6 +101,7 @@ parser.add_argument('--use1x1', default=True, type=bool)
 parser.add_argument('--prob',default=0.5,type=float)
 parser.add_argument('--adaloss',default='no', type=str)
 parser.add_argument('--prelu',default='no',type=str)
+parser.add_argument('--order',default='old',type=str)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -139,21 +140,22 @@ parser.add_argument('--place',
 best_prec1 = 0
 best_train_acc = 0
 best_b_acc_val = 0
-label_list = [
-    'Arched_Eyebrows', 'Bags_Under_Eyes', 'Bald', 'Bangs', 'Black_Hair',
-    'Blond_Hair', 'Brown_Hair', 'Bushy_Eyebrows', 'Eyeglasses', 'Gray_Hair',
-    'Narrow_Eyes', 'Receding_Hairline', 'Wearing_Hat', 'Big_Nose',
-    'High_Cheekbones', 'Pointy_Nose', 'Rosy_Cheeks', 'Sideburns',
-    'Wearing_Earrings', 'Big_Lips', 'Double_Chin', 'Goatee', 'Mustache',
-    'Mouth_Slightly_Open', 'No_Beard', 'Wearing_Lipstick', 'Wearing_Necklace',
-    'Wearing_Necktie', '5_o_Clock_Shadow', 'Attractive', 'Blurry', 'Chubby',
-    'Heavy_Makeup', 'Male', 'Oval_Face', 'Pale_Skin', 'Straight_Hair',
-    'Smiling', 'Wavy_Hair', 'Young'
-]
-attr_order = [
-    1, 3, 4, 5, 8, 9, 11, 12, 15, 17, 23, 28, 35, 7, 19, 27, 29, 30, 34, 6, 14,
-    16, 22, 21, 24, 36, 37, 38, 0, 2, 10, 13, 18, 20, 25, 26, 32, 31, 33, 39
-]
+if args.order == 'old':
+    label_list = [
+        'Arched_Eyebrows', 'Bags_Under_Eyes', 'Bald', 'Bangs', 'Black_Hair',
+        'Blond_Hair', 'Brown_Hair', 'Bushy_Eyebrows', 'Eyeglasses', 'Gray_Hair',
+        'Narrow_Eyes', 'Receding_Hairline', 'Wearing_Hat', 'Big_Nose',
+        'High_Cheekbones', 'Pointy_Nose', 'Rosy_Cheeks', 'Sideburns',
+        'Wearing_Earrings', 'Big_Lips', 'Double_Chin', 'Goatee', 'Mustache',
+        'Mouth_Slightly_Open', 'No_Beard', 'Wearing_Lipstick', 'Wearing_Necklace',
+        'Wearing_Necktie', '5_o_Clock_Shadow', 'Attractive', 'Blurry', 'Chubby',
+        'Heavy_Makeup', 'Male', 'Oval_Face', 'Pale_Skin', 'Straight_Hair',
+        'Smiling', 'Wavy_Hair', 'Young'
+    ]
+    attr_order = [
+        1, 3, 4, 5, 8, 9, 11, 12, 15, 17, 23, 28, 35, 7, 19, 27, 29, 30, 34, 6, 14,
+        16, 22, 21, 24, 36, 37, 38, 0, 2, 10, 13, 18, 20, 25, 26, 32, 31, 33, 39
+    ]
 
 
 def main():

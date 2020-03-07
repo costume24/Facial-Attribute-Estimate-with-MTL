@@ -64,13 +64,19 @@ class psnet(nn.Module):
             conv1(256, 32),
             conv1(128,32)
         ])
-
         self.group = nn.ModuleList([
-            nn.Linear(512, 26),
-            nn.Linear(512, 12),
-            nn.Linear(512, 18),
-            nn.Linear(512, 24)
+            nn.Linear(512, 512),
+            nn.Linear(512, 512),
+            nn.Linear(512, 512),
+            nn.Linear(512, 512)
         ])
+        self.group.append(
+            nn.ModuleList([
+                nn.Linear(512, 26),
+                nn.Linear(512, 12),
+                nn.Linear(512, 18),
+                nn.Linear(512, 24)
+            ]))
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, input):
@@ -89,13 +95,15 @@ class psnet(nn.Module):
         s_5 = s_5.view(-1, s_5.size()[1] * s_5.size()[2] * s_5.size()[3])
 
         block_5 = self.t_fc[0](block_5)
-        s_0_fc1 = self.s_fc[0](s_5)
+        # s_0_fc1 = self.s_fc[0](s_5)
 
         block_5 = self.t_fc[1](block_5)
-        s_0_fc2 = self.s_fc[1](s_0_fc1)
+        # s_0_fc2 = self.s_fc[1](s_0_fc1)
 
         for i in range(4):
-            self.output[i] = self.group[i](block_5)
+            self.output[i] = self.group[0][i](block_5)
+        for i in range(4):
+            self.output[i] = self.group[1][i](self.output[i])
         output_0, output_1, output_2, output_3 = self.output
         return output_0, output_1, output_2, output_3
 

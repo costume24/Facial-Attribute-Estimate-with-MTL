@@ -21,16 +21,24 @@ class CelebA(data.Dataset):
                  id_file,
                  transform=None,
                  target_transform=None,
-                 loader=default_loader):
+                 loader=default_loader,
+                 order='old'):
         # pp='/root/OneDrive/DataSets/CelebA/Img/img_align_celeba/'
         images = []
         targets = []
         id_targets = []
-        attr_order = [
-            1, 3, 4, 5, 8, 9, 11, 12, 15, 17, 23, 28, 35, 7, 19, 27, 29, 30,
-            34, 6, 14, 16, 22, 21, 24, 36, 37, 38, 0, 2, 10, 13, 18, 20, 25,
-            26, 32, 31, 33, 39
-        ]
+        if order == 'old':
+            attr_order = [
+                1, 3, 4, 5, 8, 9, 11, 12, 15, 17, 23, 28, 35, 7, 19, 27, 29, 30,
+                34, 6, 14, 16, 22, 21, 24, 36, 37, 38, 0, 2, 10, 13, 18, 20, 25,
+                26, 32, 31, 33, 39
+            ]
+        else:
+            attr_order = [
+                1, 3, 4, 5, 8, 9, 11, 12, 15, 17, 23, 28, 35, 7, 19, 27, 29, 30,
+                34, 6, 14, 16, 22, 21, 24, 36, 37, 38, 0, 2, 10, 13, 18, 20, 25,
+                26, 32, 31, 33, 39
+            ]     
         for line in open(os.path.join(root, 'Anno', ann_file), 'r'):
             sample = line.split()
             images.append(sample[0])
