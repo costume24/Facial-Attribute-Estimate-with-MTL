@@ -79,16 +79,16 @@ class psnet(nn.Module):
 
         self.group = nn.ModuleList([
             nn.ModuleList([
-                nn.Linear(1024, 512),
-                nn.Linear(1024, 512),
-                nn.Linear(1024, 512),
-                nn.Linear(1024, 512)
+                nn.Linear(1024, 256),
+                nn.Linear(1024, 256),
+                nn.Linear(1024, 256),
+                nn.Linear(1024, 256)
             ]),
             nn.ModuleList([
-                nn.Linear(512, 26),
-                nn.Linear(512, 12),
-                nn.Linear(512, 18),
-                nn.Linear(512, 24)
+                nn.Linear(256, 26),
+                nn.Linear(256, 12),
+                nn.Linear(256, 18),
+                nn.Linear(256, 24)
             ])
         ])
 
