@@ -101,7 +101,7 @@ class psnet(nn.Module):
         block_5 = self.t_fc[1](block_5)
         s_0_fc2 = self.s_fc[1](s_0_fc1)
 
-        for _ in range(4):
+        for i in range(4):
             self.output.append(torch.cat([block_5[i], s_0_fc2], 1))
 
         for i in range(4):
