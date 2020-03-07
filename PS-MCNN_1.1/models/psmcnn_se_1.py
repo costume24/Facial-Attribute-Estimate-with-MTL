@@ -77,13 +77,12 @@ class psnet(nn.Module):
             tmp = nn.ModuleList([nn.Linear(3840, 512), nn.Linear(512, 512)])
             self.t_fc.append(tmp)
 
-        self.group = nn.ModuleList(
-            nn.ModuleList([
-                nn.Linear(512, 26),
-                nn.Linear(512, 12),
-                nn.Linear(512, 18),
-                nn.Linear(512, 24)
-            ]))
+        self.group = nn.ModuleList([
+            nn.Linear(512, 26),
+            nn.Linear(512, 12),
+            nn.Linear(512, 18),
+            nn.Linear(512, 24)
+        ])
 
         self.se_list = nn.ModuleList()  # (4,4), 仅在t支路上加入se模块
         for _ in range(4):
@@ -133,7 +132,7 @@ class psnet(nn.Module):
         output_4 = torch.cat([s_0_fc2, s_0_fc2], 1)
 
         for i in range(4):
-            self.output[i] = self.group[1][i](self.output[i])
+            self.output[i] = self.group[i](self.output[i])
         # a=torch.cat()
         output_0, output_1, output_2, output_3 = self.output
         return output_0, output_1, output_2, output_3
