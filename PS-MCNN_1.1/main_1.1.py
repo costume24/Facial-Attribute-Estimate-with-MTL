@@ -175,28 +175,28 @@ def main():
     title = 'CelebA-psmcnn'
     # create model
     if args.version == 1:
-        model = models.psmcnn_se_1.psnet(args.use1x1).to(device)
+        model = models.psmcnn_se_1.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-1'
     elif args.version == 2:
-        model = models.psmcnn_se_2.psnet().to(device)
+        model = models.psmcnn_se_2.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-2'
     elif args.version == 3:
-        model = models.psmcnn_se_3.psnet().to(device)
+        model = models.psmcnn_se_3.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-3'
     elif args.version == 4:
-        model = models.psmcnn_se_4.psnet().to(device)
+        model = models.psmcnn_se_4.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-4'
     elif args.version == 5:
-        model = models.psmcnn_cbam_1.psnet().to(device)
+        model = models.psmcnn_cbam_1.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-5'
     elif args.version == 6:
-        model = models.psmcnn_cbam_2.psnet().to(device)
+        model = models.psmcnn_cbam_2.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-6'
     elif args.version == 7:
-        model = models.psmcnn_cbam_3.psnet().to(device)   
+        model = models.psmcnn_cbam_3.psnet(prelu=args.prelu).to(device)   
         title = 'CelebA-psmcnn-7'
     elif args.version == 0:
-        model = models.psmcnn_baseline.psnet().to(device)
+        model = models.psmcnn_baseline.psnet(prelu=args.prelu).to(device)
         title = 'CelebA-psmcnn-0'
     elif args.version == 8:
         model = models.psmcnn_mtl.psnet(prelu=args.prelu).to(device)

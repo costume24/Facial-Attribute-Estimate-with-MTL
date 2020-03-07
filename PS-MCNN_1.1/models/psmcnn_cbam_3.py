@@ -15,18 +15,34 @@ def conv_1x1_bn(inp, oup):
         nn.BatchNorm2d(oup),
         nn.ReLU6(inplace=True)
     )
+def conv_3x3_bn_prelu(inp, oup, stride=1):
+    return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+                         nn.BatchNorm2d(oup), nn.PReLU())
+
+
+def conv_1x1_bn_prelu(inp, oup):
+    return nn.Sequential(nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+                         nn.BatchNorm2d(oup), nn.PReLU())
+
 class psnet(nn.Module):
-    def __init__(self, use_1x1=True, ratio=0.25, num_attributes=40, input_size=224):
+    def __init__(self, use_1x1=True, prelu='no',ratio=0.25, num_attributes=40, input_size=224):
         super().__init__()
         self.use_1x1 = use_1x1
         self.pool = nn.MaxPool2d(2, 2)
+        if prelu == 'yes':
+            conv3 = conv_3x3_bn_prelu
+            conv1 = conv_1x1_bn_prelu
+        else:
+            conv3 = conv_3x3_bn
+            conv1 = conv_1x1_bn
+
         self.t_conv = nn.ModuleList()  # (4,5),每一行是一个t支路的5个卷积层
         self.s_conv = nn.ModuleList([
-            conv_3x3_bn(3, 32),
-            conv_3x3_bn(160, 64),
-            conv_3x3_bn(192, 128),
-            conv_3x3_bn(256, 256),
-            conv_3x3_bn(384, 128)
+            conv3(3, 32),
+            conv3(160, 64),
+            conv3(192, 128),
+            conv3(256, 256),
+            conv3(384, 128)
         ])  # (5,),s支路的5个卷积层
         self.t_fc = nn.ModuleList()  # (4,2)，每一行是一个t支路的2个FC层
         self.s_fc = nn.ModuleList([nn.Linear(3840, 512),
@@ -35,20 +51,20 @@ class psnet(nn.Module):
         self.conv_1x1 = nn.ModuleList() # (4,4)，用1x1卷积进行降维，取代原来的取前32个通道
         for _ in range(4):
             tmp = nn.ModuleList([
-                conv_1x1_bn(32, 32),
-                conv_1x1_bn(64, 32),
-                conv_1x1_bn(128, 32),
-                conv_1x1_bn(256, 32)
+                conv1(32, 32),
+                conv1(64, 32),
+                conv1(128, 32),
+                conv1(256, 32)
             ])
             self.conv_1x1.append(tmp)
 
         for _ in range(4):
             tmp = nn.ModuleList([
-                conv_3x3_bn(3, 32),
-                conv_3x3_bn(64, 64),
-                conv_3x3_bn(128, 128),
-                conv_3x3_bn(256, 256),
-                conv_3x3_bn(512, 128)
+                conv3(3, 32),
+                conv3(64, 64),
+                conv3(128, 128),
+                conv3(256, 256),
+                conv3(512, 128)
             ])
             self.t_conv.append(tmp)
 

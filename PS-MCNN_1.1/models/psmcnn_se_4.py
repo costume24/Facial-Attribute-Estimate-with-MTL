@@ -9,18 +9,31 @@ def conv_3x3_bn(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
                          nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
 
+def conv_3x3_bn_prelu(inp, oup, stride=1):
+    return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+                         nn.BatchNorm2d(oup), nn.PReLU())
+
+
+def conv_1x1_bn_prelu(inp, oup):
+    return nn.Sequential(nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+                         nn.BatchNorm2d(oup), nn.PReLU())
 
 class psnet(nn.Module):
-    def __init__(self, ratio=0.25, num_attributes=40, input_size=224):
+    def __init__(self, prelu='no',ratio=0.25, num_attributes=40, input_size=224):
         super().__init__()
+        if prelu == 'yes':
+            conv3 = conv_3x3_bn_prelu
+        else:
+            conv3 = conv_3x3_bn
+
         self.pool = nn.MaxPool2d(2, 2)
         self.t_conv = nn.ModuleList()  # (4,5),每一行是一个t支路的5个卷积层
         self.s_conv = nn.ModuleList([
-            conv_3x3_bn(3, 32),
-            conv_3x3_bn(160, 64),
-            conv_3x3_bn(192, 128),
-            conv_3x3_bn(256, 256),
-            conv_3x3_bn(384, 128)
+            conv3(3, 32),
+            conv3(160, 64),
+            conv3(192, 128),
+            conv3(256, 256),
+            conv3(384, 128)
         ])  # (5,),s支路的5个卷积层
         self.t_fc = nn.ModuleList()  # (4,2)，每一行是一个t支路的2个FC层
         self.s_fc = nn.ModuleList([nn.Linear(3840, 512),
@@ -28,11 +41,11 @@ class psnet(nn.Module):
         self.output = []  # (4,), 4个支路的输出
         for _ in range(4):
             tmp = nn.ModuleList([
-                conv_3x3_bn(3, 32),
-                conv_3x3_bn(64, 64),
-                conv_3x3_bn(128, 128),
-                conv_3x3_bn(256, 256),
-                conv_3x3_bn(512, 128)
+                conv3(3, 32),
+                conv3(64, 64),
+                conv3(128, 128),
+                conv3(256, 256),
+                conv3(512, 128)
             ])
             self.t_conv.append(tmp)
 
@@ -51,7 +64,7 @@ class psnet(nn.Module):
         ])
 
         self.se_list_t = nn.ModuleList()  # (4,4), t支路到s支路的se + 1x1
-        self.se_list_s = nn.ModuleList() # (4,4), s支路到t支路的se + 1x1
+        self.se_list_s = nn.ModuleList() # (4,4), s支路到t支路的se
         for _ in range(4):
             tmp = nn.ModuleList([
                 SE_and_1x1(32),
@@ -154,7 +167,7 @@ class SELayer(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Sequential(
             nn.Linear(channel, int(channel / reduction), bias=False),
-            nn.ReLU(inplace=True),
+            nn.PReLU(inplace=True),
             nn.Linear(int(channel / reduction), channel, bias=False),
             nn.Sigmoid())
 

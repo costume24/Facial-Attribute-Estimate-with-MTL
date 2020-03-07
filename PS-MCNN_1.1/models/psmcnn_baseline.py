@@ -15,20 +15,34 @@ def conv_1x1_bn(inp, oup):
         nn.BatchNorm2d(oup),
         nn.ReLU6(inplace=True)
     )
+
+def conv_3x3_bn_prelu(inp, oup, stride=1):
+    return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+                         nn.BatchNorm2d(oup), nn.PReLU())
+
+
+def conv_1x1_bn_prelu(inp, oup):
+    return nn.Sequential(nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+                         nn.BatchNorm2d(oup), nn.PReLU())
 class psnet(nn.Module):
     def __init__(self,
                  use_1x1=True,
+                 prelu='no',
                  ratio=0.25,
                  num_attributes=40,
                  input_size=224):
         super().__init__()
+        if prelu == 'yes':
+            conv3 = conv_3x3_bn_prelu
+        else:
+            conv3 = conv_3x3_bn
         self.pool = nn.MaxPool2d(2, 2)
         self.t_conv = nn.ModuleList([
-                conv_3x3_bn(3, 32),
-                conv_3x3_bn(32, 64),
-                conv_3x3_bn(64, 128),
-                conv_3x3_bn(128, 256),
-                conv_3x3_bn(256, 128)
+                conv3(3, 32),
+                conv3(32, 64),
+                conv3(64, 128),
+                conv3(128, 256),
+                conv3(256, 128)
             ])  
         self.t_fc = nn.ModuleList([nn.Linear(3840, 512), nn.Linear(512, 512)])
         self.output = []  # (4,), 4个支路的输出
