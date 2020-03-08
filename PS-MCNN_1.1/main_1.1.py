@@ -201,7 +201,9 @@ def main():
         title = 'CelebA-psmcnn-0'
     elif args.version == 8:
         model = models.psmcnn_mtl.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-8'       
+        title = 'CelebA-psmcnn-8'  
+    elif args.version == 9:
+        model = models.psmcnn_mtl_8.psnet().to(device)
     data_path = ''
     if args.place == 'deepai':
         data_path = '/root/OneDrive/DataSets/CelebA/'
