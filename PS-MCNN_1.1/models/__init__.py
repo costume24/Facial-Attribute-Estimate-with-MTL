@@ -16,5 +16,6 @@ from models.psmcnn_mtl import *
 from models.psmcnn_mtl_8 import *
 from models.psmcnn_mtl_16 import *
 from models.psmcnn_mtl_64 import *
+from models.psmcnn_mtl_v2 import *
 
 
