@@ -439,7 +439,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     tn = 0.0
     fp = 0.0
     fn = 0.0
-    for i, (input, target, id_target) in enumerate(train_loader):
+    for i, (input, target) in enumerate(train_loader):
 
         # measure data loading time
         optimizer.zero_grad()
@@ -584,7 +584,7 @@ def validate(val_loader, model, criterion, writer, count, epoch):
         val_total = 0.0
         val_correct = 0.0
         acc_for_each =  torch.zeros(40, device='cuda:0')
-        for i, (input, target, id_target) in enumerate(val_loader):
+        for i, (input, target) in enumerate(val_loader):
             # measure data loading time
             data_time.update(time.time() - end)
 
@@ -703,7 +703,7 @@ def test(test_loader, model, criterion):
         val_total = 0.0
         val_correct = 0.0
         acc_for_each =  torch.zeros(40, device='cuda:0')
-        for i, (input, target, id_target) in enumerate(test_loader):
+        for i, (input, target) in enumerate(test_loader):
             # measure data loading time
             data_time.update(time.time() - end)
 
