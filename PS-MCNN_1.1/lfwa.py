@@ -36,7 +36,7 @@ class LFWA(data.Dataset):
                 34, 6, 14, 16, 22, 21, 24, 36, 37, 38, 0, 2, 10, 13, 18, 20, 25,
                 26, 32, 31, 33, 39
             ]     
-        for line in open(os.path.join(root, 'lfw', ann_file), 'r'):
+        for line in open(os.path.join(root, ann_file), 'r'):
             sample = line.split()
             images.append(sample[0])
             tmp = [int(i == '1') for i in sample[1:]]
@@ -47,7 +47,7 @@ class LFWA(data.Dataset):
 
         # self.images = [os.path.join(root, type, img) for img in images]
         self.images = [
-            os.path.join(root, img)
+            os.path.join(root, 'lfw', img)
             for img in images
         ]
         self.targets = targets
