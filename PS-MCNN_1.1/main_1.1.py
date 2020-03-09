@@ -343,7 +343,7 @@ def main():
                                              num_workers=args.workers,
                                              shuffle=False,
                                              pin_memory=False)
-    if agrs.set == 'c':
+    if args.set == 'c':
         test_loader = torch.utils.data.DataLoader(test_dataset,
                                                 batch_size=args.test_batch,
                                                 num_workers=args.workers,
