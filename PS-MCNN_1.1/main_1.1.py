@@ -448,7 +448,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
 
         input = input.cuda(non_blocking=True)
         target = target.cuda(non_blocking=True)
-        id_target = id_target.cuda(non_blocking=True)
 
         # compute output
         output_0, output_1, output_2, output_3 = model.forward(input)
