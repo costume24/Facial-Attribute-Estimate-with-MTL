@@ -30,6 +30,7 @@ from sklearn.metrics import balanced_accuracy_score, confusion_matrix
 from celeba import CelebA, TensorSampler, data_prefetcher
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 from tensorboardX import SummaryWriter
+from lfwa import LFWA
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 parser = argparse.ArgumentParser(description='PyTorch CelebA Training')
@@ -37,6 +38,7 @@ parser.add_argument('-d',
                     '--data',
                     default='/root/OneDrive/DataSets/CelebA/Anno',
                     type=str)
+parser.add_argument('--set',default='c',type=str)
 parser.add_argument('-j',
                     '--workers',
                     default=4,
@@ -211,16 +213,28 @@ def main():
     elif args.version == 12:
         model = models.psmcnn_mtl_v2.psnet().to(device)
     data_path = ''
-    if args.place == 'deepai':
-        data_path = '/root/OneDrive/DataSets/CelebA/'
-    elif args.place == 'my':
-        data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/CelebA/'
-    elif args.place == 'kb541':
-        data_path = '/media/E/xuke/CelebA/'
-    elif args.place == 'phd-1':
-        data_path = '/media/kb541/data/xuke/CelebA/'
-    elif args.place == 'mist':
-        data_path = '/home/mist/CelebA/'
+    if args.set == 'c':
+        if args.place == 'deepai':
+            data_path = '/root/OneDrive/DataSets/Celeba_Crop/'
+        elif args.place == 'my':
+            data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/Celeba_Crop/'
+        elif args.place == 'kb541':
+            data_path = '/media/E/xuke/Celeba_Crop/'
+        elif args.place == 'phd-1':
+            data_path = '/media/kb541/data/xuke/Celeba_Crop/'
+        elif args.place == 'mist':
+            data_path = '/home/mist/Celeba_Crop/'
+    elif args.set == 'l':
+        if args.place == 'deepai':
+            data_path = '/root/OneDrive/DataSets/LFWA/'
+        elif args.place == 'my':
+            data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/LFWA/'
+        elif args.place == 'kb541':
+            data_path = '/media/E/xuke/LFWA/'
+        elif args.place == 'phd-1':
+            data_path = '/media/kb541/data/xuke/LFWA/'
+        elif args.place == 'mist':
+            data_path = '/home/mist/LFWA/'      
     # model.apply(weight_init)
     # define loss function (criterion) and optimizer
     if args.focal == 'yes':
@@ -271,33 +285,52 @@ def main():
     # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     normalize = transforms.Normalize(mean=[0.383, 0.426, 0.506],
                                      std=[0.290, 0.290, 0.311])
-
-    train_dataset = CelebA(
-        data_path, 'list_attr_celeba_train.txt', 'identity_CelebA_train.txt',
-        transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop((160, 192)),
-            transforms.ToTensor(),
-            normalize,
-            RandomErasing(args.prob),
-        ]))
-    val_dataset = CelebA(
-        data_path, 'list_attr_celeba_val.txt', 'identity_CelebA_val.txt',
-        transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.RandomCrop((160, 192)),
-            transforms.ToTensor(),
-            normalize,
-        ]))
-    test_dataset = CelebA(
-        data_path, 'list_attr_celeba_test.txt', 'identity_CelebA_test.txt',
-        transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.RandomCrop((160, 192)),
-            transforms.ToTensor(),
-            normalize,
-        ]))
+    if args.set == 'c':
+        train_dataset = CelebA(
+            data_path, 'list_attr_celeba_train.txt', 'identity_CelebA_train.txt',
+            transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop((160, 192)),
+                transforms.ToTensor(),
+                normalize,
+                RandomErasing(args.prob),
+            ]))
+        val_dataset = CelebA(
+            data_path, 'list_attr_celeba_val.txt', 'identity_CelebA_val.txt',
+            transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.RandomCrop((160, 192)),
+                transforms.ToTensor(),
+                normalize,
+            ]))
+        test_dataset = CelebA(
+            data_path, 'list_attr_celeba_test.txt', 'identity_CelebA_test.txt',
+            transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.RandomCrop((160, 192)),
+                transforms.ToTensor(),
+                normalize,
+            ]))
+    elif args.set == 'l':
+        train_dataset = LFWA(
+            data_path, 'train.txt',
+            transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop((160, 192)),
+                transforms.ToTensor(),
+                normalize,
+                RandomErasing(args.prob),
+            ]))
+        val_dataset = LFWA(
+            data_path,'val.txt',
+            transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.RandomCrop((160, 192)),
+                transforms.ToTensor(),
+                normalize,
+            ]))     
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=args.train_batch,
@@ -310,11 +343,11 @@ def main():
                                              num_workers=args.workers,
                                              shuffle=False,
                                              pin_memory=False)
-
-    test_loader = torch.utils.data.DataLoader(test_dataset,
-                                              batch_size=args.test_batch,
-                                              num_workers=args.workers,
-                                              pin_memory=False)
+    if agrs.set == 'c':
+        test_loader = torch.utils.data.DataLoader(test_dataset,
+                                                batch_size=args.test_batch,
+                                                num_workers=args.workers,
+                                                pin_memory=False)
 
     # if args.evaluate:
     #     validate(test_loader, model, criterion,)
