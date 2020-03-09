@@ -215,15 +215,15 @@ def main():
     data_path = ''
     if args.set == 'c':
         if args.place == 'deepai':
-            data_path = '/root/OneDrive/DataSets/Celeba_Crop/'
+            data_path = '/root/OneDrive/DataSets/CelebA_Crop/'
         elif args.place == 'my':
-            data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/Celeba_Crop/'
+            data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/CelebA_Crop/'
         elif args.place == 'kb541':
-            data_path = '/media/E/xuke/Celeba_Crop/'
+            data_path = '/media/E/xuke/CelebA_Crop/'
         elif args.place == 'phd-1':
-            data_path = '/media/kb541/data/xuke/Celeba_Crop/'
+            data_path = '/media/kb541/data/xuke/CelebA_Crop/'
         elif args.place == 'mist':
-            data_path = '/home/mist/Celeba_Crop/'
+            data_path = '/home/mist/CelebA_Crop/'
     elif args.set == 'l':
         if args.place == 'deepai':
             data_path = '/root/OneDrive/DataSets/LFWA/'
