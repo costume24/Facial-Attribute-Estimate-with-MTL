@@ -407,7 +407,8 @@ def main():
 
     rank(best_acc_of_each_val,'Acc')
     rank(best_b_acc_of_each_val,'BAcc')
-    test(test_loader, model, criterion)
+    if args.set == 'c':
+        test(test_loader, model, criterion)
     print('Best accuracy:')
     print(best_prec1)
     print('Best balanced accuracy:')
@@ -466,15 +467,15 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
                 loss_attr[k] += criterion(output[:, :, k],
                                           target[:, k].long()) * weight[k]
             loss += loss_attr[k]
-        # 加入LC-loss
-        lc_loss = 0.0
-        for u in range(len(id_target)):
-            for v in range(u + 1, len(id_target)):
-                if id_target[u] == id_target[v]:
-                    lc_loss += torch.sum(
-                        (output[u, :, :] - output[v, :, :])**2)
-        lc_loss /= 1560  # N*(N-1)，本例中就是40*39=1560
-        loss += lc_loss
+        # # 加入LC-loss
+        # lc_loss = 0.0
+        # for u in range(len(id_target)):
+        #     for v in range(u + 1, len(id_target)):
+        #         if id_target[u] == id_target[v]:
+        #             lc_loss += torch.sum(
+        #                 (output[u, :, :] - output[v, :, :])**2)
+        # lc_loss /= 1560  # N*(N-1)，本例中就是40*39=1560
+        # loss += lc_loss
         loss = loss.requires_grad_()
         _, pred = torch.max(output, 1)  # (?,40)
         conf = (confusion_matrix(
