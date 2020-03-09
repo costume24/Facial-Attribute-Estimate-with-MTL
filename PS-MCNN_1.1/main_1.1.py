@@ -850,7 +850,11 @@ def rank(input, mode):
     orders = [0] * 6
     w = open(os.path.join(args.checkpoint, mode + '.txt'),'w')
     if mode.startswith('A'):
-        with open('./origin.txt') as f:
+        if args.set == 'c':
+            path = './origin.txt'
+        else:
+            path = './origin_lfwa.txt'
+        with open(path) as f:
             sline = f.readline()
             i = 0
             while sline:
