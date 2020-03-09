@@ -226,15 +226,15 @@ def main():
             data_path = '/home/mist/CelebA_Crop/'
     elif args.set == 'l':
         if args.place == 'deepai':
-            data_path = '/root/OneDrive/DataSets/LFWA/'
+            data_path = '/root/OneDrive/DataSets/LFWA/lfw'
         elif args.place == 'my':
-            data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/LFWA/'
+            data_path = '/media/xuke/SoftWare/BaiduNetdiskDownload/LFWA/lfw'
         elif args.place == 'kb541':
-            data_path = '/media/E/xuke/LFWA/'
+            data_path = '/media/E/xuke/LFWA/lfw'
         elif args.place == 'phd-1':
-            data_path = '/media/kb541/data/xuke/LFWA/'
+            data_path = '/media/kb541/data/xuke/LFWA/lfw'
         elif args.place == 'mist':
-            data_path = '/home/mist/LFWA/'      
+            data_path = '/home/mist/LFWA//lfw'      
     # model.apply(weight_init)
     # define loss function (criterion) and optimizer
     if args.focal == 'yes':
