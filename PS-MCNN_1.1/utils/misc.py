@@ -65,7 +65,7 @@ def mkdir_p(path, order):
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
-            path = mkdir_p(path, order+1)
+            path = mkdir_p(path[:-3], order+1)
         else:
             raise
     return path
