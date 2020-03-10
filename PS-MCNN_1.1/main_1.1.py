@@ -264,7 +264,7 @@ def main():
     args.checkpoint = 'checkpoints_v' + '_'.join([str(args.version), args.set,
                                                  args.focal, args.adaloss,
                                                  str(args.epochs), str(args.train_batch),
-                                                 '{:.0e}'.format(str(args.lr)), str(args.lr_decay)])
+                                                 '{:.0e}'.format(args.lr), str(args.lr_decay)])
     if not os.path.isdir(args.checkpoint):
         mkdir_p(args.checkpoint, 1)
 
