@@ -266,7 +266,7 @@ def main():
                                                  str(args.epochs), str(args.train_batch),
                                                  '{:.0e}'.format(args.lr), str(args.lr_decay)])
     if not os.path.isdir(args.checkpoint):
-        mkdir_p(args.checkpoint, 1)
+        args.checkpoint = mkdir_p(args.checkpoint, 1)
 
     # resume work
     if args.pres:
