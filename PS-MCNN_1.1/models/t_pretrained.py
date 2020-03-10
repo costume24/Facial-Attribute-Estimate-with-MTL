@@ -33,6 +33,8 @@ class psnet(nn.Module):
         super().__init__()
         self.pool = nn.MaxPool2d(2, 2)
         conv3 = conv_3x3_bn
+        conv1 = conv_1x1_bn
+
         self.t_conv = nn.ModuleList([
             conv3(3, 32),
             conv3(64, 64),
@@ -43,7 +45,13 @@ class psnet(nn.Module):
 
         self.t_fc = nn.ModuleList([nn.Linear(7680, 1024), nn.Linear(1024, 512)])
         self.output = []  # (4,), 4个支路的输出
-
+        self.conv_1x1 = nn.ModuleList([
+            conv1(32, 64),
+            conv1(64, 128),
+            conv1(128, 256),
+            conv1(256, 512),
+            conv1(128,256)
+        ])
         self.group = nn.ModuleList([
             nn.Linear(512, 26),
             nn.Linear(512, 12),
@@ -79,7 +87,7 @@ class psnet(nn.Module):
 
     def block(self, t_0, ind):
         t_0 = self.t_conv[ind](t_0)
-
+        t_0 = self.conv_1x1[ind](t_0)
         t_0 = self.pool(t_0)
 
         return t_0
