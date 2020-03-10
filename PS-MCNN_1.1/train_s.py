@@ -178,48 +178,10 @@ def main():
 
 
     # create model
-    if args.version == 1:
-        model = models.psmcnn_se_1.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-1'
-    elif args.version == 2:
-        model = models.psmcnn_se_2.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-2'
-    elif args.version == 3:
-        model = models.psmcnn_se_3.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-3'
-    elif args.version == 4:
-        model = models.psmcnn_se_4.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-4'
-    elif args.version == 5:
-        model = models.psmcnn_cbam_1.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-5'
-    elif args.version == 6:
-        model = models.psmcnn_cbam_2.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-6'
-    elif args.version == 7:
-        model = models.psmcnn_cbam_3.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-7'
-    elif args.version == 0:
-        model = models.psmcnn_baseline.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-0'
-    elif args.version == 8:
-        model = models.psmcnn_mtl.psnet(prelu=args.prelu).to(device)
-        title = args.set+'-psmcnn-8'
-    elif args.version == 9:
-        model = models.psmcnn_mtl_8.psnet().to(device)
-        title = args.set+'-psmcnn-9'
-    elif args.version == 10 :
-        model = models.psmcnn_mtl_16.psnet().to(device)
-        title = args.set+'-psmcnn-10'
-    elif args.version == 11:
-        model = models.psmcnn_mtl_64.psnet().to(device)
-        title = args.set+'-psmcnn-11'
-    elif args.version == 12:
-        model = models.psmcnn_mtl_v2.psnet().to(device)
-        title = args.set+'-psmcnn-12'
-    elif args.version == 20:
-        model = models.t_pretrained.psnet().to(device)
-        title = args.set+'-psmcnn-20'
+    if args.version == 30:
+        model = models.s_pretrained.psnet().to(device)
+        title = args.set+'-psmcnn-30'
+
     data_path = ''
     if args.set == 'c':
         if args.place == 'deepai':
@@ -273,14 +235,14 @@ def main():
         if os.path.isfile(args.pres):
             print("=> loading checkpoint '{}'".format(args.pres))
             checkpoint = torch.load(args.pres)
-            # optimizer.load_state_dict(checkpoint['optimizer'])
+            optimizer.load_state_dict(checkpoint['optimizer'])
 
             save_model = checkpoint['state_dict']
 
             model_dict = model.state_dict()
             state_dict = {}
             for k, v in save_model.items():
-                if k in model_dict.keys() and 's_conv' in k:
+                if k in model_dict.keys() and 'fc' not in k:
                     state_dict[k] = v
             model_dict.update(state_dict)
             model.load_state_dict(model_dict)
@@ -291,14 +253,14 @@ def main():
         if os.path.isfile(args.pret):
             print("=> loading checkpoint '{}'".format(args.pret))
             checkpoint = torch.load(args.pret)
-            # optimizer.load_state_dict(checkpoint['optimizer'])
+            optimizer.load_state_dict(checkpoint['optimizer'])
 
             save_model = checkpoint['state_dict']
 
             model_dict = model.state_dict()
             state_dict = {}
             for k, v in save_model.items():
-                if k in model_dict.keys() and 't_conv' in k:
+                if k in model_dict.keys() and 'fc' not in k:
                     state_dict[k] = v
             model_dict.update(state_dict)
             model.load_state_dict(model_dict)
@@ -309,14 +271,14 @@ def main():
         if os.path.isfile(args.pre4t):
             print("=> loading checkpoint '{}'".format(args.pre4t))
             checkpoint = torch.load(args.pre4t)
-            # optimizer.load_state_dict(checkpoint['optimizer'])
+            optimizer.load_state_dict(checkpoint['optimizer'])
 
             save_model = checkpoint['state_dict']
 
             model_dict = model.state_dict()
             state_dict = {}
             for k, v in save_model.items():
-                if 't_conv' in k:
+                if 't_conv' in k or 's_conv' in k:
                     kk = k.split('.')
                     kk.insert(1,'0')
                     for i in range(4):
@@ -412,40 +374,29 @@ def main():
     writer = SummaryWriter(os.path.join(args.checkpoint, 'logs'))
     count_train = 0
     count_val = 0
-    best_acc_of_each_train = torch.zeros(40, device='cuda:0')
-    best_acc_of_each_val = torch.zeros(40, device='cuda:0')
-    best_b_acc_of_each_train = torch.zeros(40, device='cuda:0')
-    best_b_acc_of_each_val = torch.zeros(40, device='cuda:0')
+
     for epoch in range(args.start_epoch, args.epochs):
         lr = adjust_learning_rate(optimizer, epoch)
 
         print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, lr))
 
-        train_loss, train_acc, each_train, count_train, b_acc_of_each_train, mb_train = train(
+        train_loss, train_acc = train(
             train_loader, model, criterion, optimizer, epoch, writer,
             count_train)
 
-        val_loss, prec1, each_val, count_val, b_acc_of_each_val, mb_val = validate(
+        val_loss, prec1 = validate(
             val_loader, model, criterion, writer, count_val, epoch)
 
         logger.append([lr, train_loss, val_loss, train_acc, prec1])
 
-        if train_acc > best_train_acc:
-            best_acc_of_each_train = each_train
-            best_train_acc = train_acc
-
-        if mb_val > best_b_acc_val:
-            best_b_acc_of_each_val = b_acc_of_each_val
-            best_b_acc_val = mb_val
         writer.add_scalar('learning_rate', lr, epoch + 1)
         is_best = prec1 > best_prec1
         best_prec1 = max(prec1, best_prec1)
-        if is_best:
-            best_acc_of_each_val = each_val
+
         save_checkpoint(
             {
                 'epoch': epoch + 1,
-                'arch': 'psmcnn',
+                'arch': 's',
                 'state_dict': model.state_dict(),
                 'best_prec1': best_prec1,
                 'optimizer': optimizer.state_dict(),
@@ -459,15 +410,10 @@ def main():
     logger.plot()
     savefig(os.path.join(args.checkpoint, 'log.eps'))
     writer.close()
-
-    rank(best_acc_of_each_val,'Acc')
-    rank(best_b_acc_of_each_val,'BAcc')
     if args.set == 'c':
         test(test_loader, model, criterion)
     print('Best accuracy:')
     print(best_prec1)
-    print('Best balanced accuracy:')
-    print(best_b_acc_val.item())
 
 
 def train(train_loader, model, criterion, optimizer, epoch, writer, count):
@@ -479,21 +425,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
 
     end = time.time()
 
-
-
     train_total = 0.0
     train_correct = 0.0
-    acc_for_each =  torch.zeros(40, device='cuda:0')
-    # 计算平衡准确率
-    balance = [0] * 40
-    weight = [1] * 40
-    stage = 0
-    if args.adaloss == 'yes' and epoch >= 10:
-        stage = 1
-    tp = 0.0
-    tn = 0.0
-    fp = 0.0
-    fn = 0.0
     for i, (input, target_all) in enumerate(train_loader):
 
         # measure data loading time
@@ -502,79 +435,18 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         data_time.update(time.time() - end)
 
         input = input.cuda(non_blocking=True)
-        target = target_all[0].cuda(non_blocking=True)
+        id_target = target_all[1].cuda(non_blocking=True)
         # compute output
-        output_0, output_1, output_2, output_3 = model.forward(input)
-        output_0 = output_0.view(-1, 2, 13)
-        output_1 = output_1.view(-1, 2, 6)
-        output_2 = output_2.view(-1, 2, 9)
-        output_3 = output_3.view(-1, 2, 12)
-        output = torch.cat([output_0, output_1, output_2, output_3], 2)
+        output = model.forward(input) # (?,10178)
+
         # measure accuracy and record loss
         loss = 0.0
-        loss_attr = [0.0 for i in range(40)]
-        for k in range(40):
-            if stage == 0:
-                loss_attr[k] += criterion(output[:, :, k], target[:, k].long())
-            else:
-                loss_attr[k] += criterion(output[:, :, k],
-                                          target[:, k].long()) * weight[k]
-            loss += loss_attr[k]
-        # # 加入LC-loss
-        # lc_loss = 0.0
-        # for u in range(len(id_target)):
-        #     for v in range(u + 1, len(id_target)):
-        #         if id_target[u] == id_target[v]:
-        #             lc_loss += torch.sum(
-        #                 (output[u, :, :] - output[v, :, :])**2)
-        # lc_loss /= 1560  # N*(N-1)，本例中就是40*39=1560
-        # loss += lc_loss
+        loss = criterion(output,id_target)
+
         loss = loss.requires_grad_()
         _, pred = torch.max(output, 1)  # (?,40)
-        conf = (confusion_matrix(
-            target.view(-1).cpu().numpy(),
-            pred.view(-1).cpu().numpy())).ravel()
 
-        tn = tn + conf[0]
-        fp = fp + conf[1]
-        fn = fn + conf[2]
-        tp = tp + conf[3]
-        # loss的加权
-        max_loss = max(loss_attr)
-        min_loss = min(loss_attr)
-        avg_loss = sum(loss_attr) / len(loss_attr)
-        for ii in range(40):
-            weight[ii] = math.exp(
-                (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
 
-        compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
-        # 计算平衡准确率
-        balance_tmp = [0] * 40
-        for iii in range(40):
-            balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
-
-        if sum(balance) == 0:
-            balance = torch.Tensor(balance_tmp)
-        else:
-            balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
-        mean_balance = torch.mean(balance)
-
-        # 每个属性在当前batch的准确率
-        correct_single = compare_result / output.size(0)  # (?,40)
-
-        # 所有属性的平均准确率
-        if i == 0:
-            acc_for_each = correct_single
-        else:
-            acc_for_each = (acc_for_each + correct_single) / 2
-
-        train_correct += torch.sum(
-            pred == target,
-            dtype=torch.float32).item()  # num_classes need you to define
-
-        train_total += output.size(0)
-        cls_train_Accuracy = train_correct / train_total / 40.0
-        loss_avg = sum(loss_attr) / len(loss_attr)
 
         loss.backward()
         optimizer.step()
@@ -583,40 +455,19 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        # 统计每个属性的准确率
-        acc_dic = {'train_accuracy': cls_train_Accuracy}
-        for ii in range(len(correct_single)):
-            acc_dic[label_list[ii]] = correct_single[ii]
-        writer.add_scalars('loss', {'train_loss': loss_avg}, count)
-        writer.add_scalars('acc_train', acc_dic, count)
-        count += 1
-
-        bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
-        'mbAcc: {mbAcc: .5f}'.format(
+        bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '.format(
             batch=i + 1,
             size=len(train_loader),
             data=data_time.avg,
             bt=batch_time.avg,
             total=bar.elapsed_td,
             eta=bar.eta_td,
-            loss=loss_avg,
-            mbAcc=mean_balance
+            loss=loss_avg
         )
         bar.next()
     bar.finish()
-    p = tp / (tp + fp)
-    r = tp / (tp + fn)
-    f2 = 5 * p * r / (4 * p + r)
-    with open(os.path.join(args.checkpoint,'f2-train.txt'), 'a') as f:
-        f.writelines('tp: {:<7d}|tn: {:<7d}|fp: {:<7d}|fn: {:<7d}|p: {:.4f}|r: {:.4f}|f2: {:.4f}\n'.format(int(tp),int(tn),int(fp),int(fn),p,r,f2))
-    # 统计每个属性的**平均**准确率
-    b_acc_dic = {}
-    for ii in range(40):
-        b_acc_dic[label_list[ii]] = balance[ii]
-    b_acc_dic['Ave.']=torch.mean(balance).item()
-    writer.add_scalars('b_acc_train', b_acc_dic, epoch + 1)
 
-    return (loss_avg, cls_train_Accuracy, acc_for_each, count, balance, mean_balance)
+    return (loss_avg, cls_train_Accuracy)
 
 
 def validate(val_loader, model, criterion, writer, count, epoch):
