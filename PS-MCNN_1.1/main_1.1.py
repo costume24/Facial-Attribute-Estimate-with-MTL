@@ -494,7 +494,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     tn = 0.0
     fp = 0.0
     fn = 0.0
-    for i, (input, target_all) in enumerate(train_loader):
+    for i, (input, target) in enumerate(train_loader):
 
         # measure data loading time
         optimizer.zero_grad()
@@ -502,7 +502,7 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         data_time.update(time.time() - end)
 
         input = input.cuda(non_blocking=True)
-        target = target_all[0].cuda(non_blocking=True)
+        target = target.cuda(non_blocking=True)
         # compute output
         output_0, output_1, output_2, output_3 = model.forward(input)
         output_0 = output_0.view(-1, 2, 13)
@@ -637,12 +637,12 @@ def validate(val_loader, model, criterion, writer, count, epoch):
         val_total = 0.0
         val_correct = 0.0
         acc_for_each =  torch.zeros(40, device='cuda:0')
-        for i, (input, target_all) in enumerate(val_loader):
+        for i, (input, target) in enumerate(val_loader):
             # measure data loading time
             data_time.update(time.time() - end)
 
             input = input.cuda(non_blocking=True)
-            target = target_all[0].cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
 
             # compute output
             # output = model(input)
@@ -756,12 +756,12 @@ def test(test_loader, model, criterion):
         val_total = 0.0
         val_correct = 0.0
         acc_for_each =  torch.zeros(40, device='cuda:0')
-        for i, (input, target_all) in enumerate(test_loader):
+        for i, (input, target) in enumerate(test_loader):
             # measure data loading time
             data_time.update(time.time() - end)
 
             input = input.cuda(non_blocking=True)
-            target = target_all[0].cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
 
             # compute output
             # output = model(input)
