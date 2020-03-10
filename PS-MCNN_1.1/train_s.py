@@ -321,14 +321,6 @@ def main():
                 transforms.ToTensor(),
                 normalize,
             ]))
-        test_dataset = CelebA(
-            data_path, 'list_attr_celeba_test.txt', 'identity_CelebA_test.txt',
-            transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.RandomCrop((160, 192)),
-                transforms.ToTensor(),
-                normalize,
-            ]))
     elif args.set == 'l':
         train_dataset = LFWA(
             data_path, 'train.txt',
@@ -360,15 +352,7 @@ def main():
                                              num_workers=args.workers,
                                              shuffle=False,
                                              pin_memory=False)
-    if args.set == 'c':
-        test_loader = torch.utils.data.DataLoader(test_dataset,
-                                                batch_size=args.test_batch,
-                                                num_workers=args.workers,
-                                                pin_memory=False)
 
-    # if args.evaluate:
-    #     validate(test_loader, model, criterion,)
-    #     return
 
 
     writer = SummaryWriter(os.path.join(args.checkpoint, 'logs'))
@@ -410,8 +394,6 @@ def main():
     logger.plot()
     savefig(os.path.join(args.checkpoint, 'log.eps'))
     writer.close()
-    if args.set == 'c':
-        test(test_loader, model, criterion)
     print('Best accuracy:')
     print(best_prec1)
 
@@ -445,8 +427,12 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
 
         loss = loss.requires_grad_()
         _, pred = torch.max(output, 1)  # (?,40)
+        train_correct += torch.sum(
+            pred == target,
+            dtype=torch.float32).item()  # num_classes need you to define
 
-
+        train_total += output.size(0)
+        cls_train_Accuracy = train_correct / train_total
 
         loss.backward()
         optimizer.step()
@@ -455,19 +441,21 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '.format(
+        bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
+        'top1: {top1: .5f}'.format(
             batch=i + 1,
             size=len(train_loader),
             data=data_time.avg,
             bt=batch_time.avg,
             total=bar.elapsed_td,
             eta=bar.eta_td,
-            loss=loss_avg
+            loss=loss,
+            top1=cls_train_Accuracy
         )
         bar.next()
     bar.finish()
 
-    return (loss_avg, cls_train_Accuracy)
+    return (loss, cls_train_Accuracy)
 
 
 def validate(val_loader, model, criterion, writer, count, epoch):
@@ -478,218 +466,56 @@ def validate(val_loader, model, criterion, writer, count, epoch):
 
     model.eval()
 
-    balance = [0] * 40
-    tp = 0.0
-    tn = 0.0
-    fp = 0.0
-    fn = 0.0
     with torch.no_grad():
         end = time.time()
-        val_total = 0.0
-        val_correct = 0.0
-        acc_for_each =  torch.zeros(40, device='cuda:0')
+
+        train_total = 0.0
+        train_correct = 0.0
         for i, (input, target_all) in enumerate(val_loader):
+
             # measure data loading time
+
             data_time.update(time.time() - end)
 
             input = input.cuda(non_blocking=True)
-            target = target_all[0].cuda(non_blocking=True)
-
+            id_target = target_all[1].cuda(non_blocking=True)
             # compute output
-            # output = model(input)
-            output_0, output_1, output_2, output_3 = model.forward(input)
-            output_0 = output_0.view(-1, 2, 13)
-            output_1 = output_1.view(-1, 2, 6)
-            output_2 = output_2.view(-1, 2, 9)
-            output_3 = output_3.view(-1, 2, 12)
-            output = torch.cat([output_0, output_1, output_2, output_3], 2)
+            output = model.forward(input) # (?,10178)
 
             # measure accuracy and record loss
             loss = 0.0
-            loss_attr = [0.0 for i in range(40)]
-            for k in range(40):
-                loss_attr[k] += criterion(output[:, :, k], target[:, k])
-                loss += loss_attr[k]
+            loss = criterion(output,id_target)
 
-            # 加入LC-loss
-            # lc_loss = 0.0
-            # for u in range(len(id_target)):
-            #     for v in range(u + 1, len(id_target)):
-            #         if id_target[u] == id_target[v]:
-            #             lc_loss += torch.sum(
-            #                 (output[u, :, :] - output[v, :, :])**2)
-            # lc_loss /= 1560  # N*(N-1)，本例中就是40*39=1560
-            # loss += lc_loss
             loss = loss.requires_grad_()
-            _, pred = torch.max(output, 1)
-            conf = (confusion_matrix(
-                target.view(-1).cpu().numpy(),
-                pred.view(-1).cpu().numpy())).ravel()
+            _, pred = torch.max(output, 1)  # (?,40)
+            train_correct += torch.sum(
+                pred == target,
+                dtype=torch.float32).item()  # num_classes need you to define
 
-            tn = tn + conf[0]
-            fp = fp + conf[1]
-            fn = fn + conf[2]
-            tp = tp + conf[3]
+            train_total += output.size(0)
+            cls_train_Accuracy = train_correct / train_total
 
-            # 计算平衡准确率
-            balance_tmp = [0] * 40
-            for iii in range(40):
-                balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
+            loss.backward()
 
-            if sum(balance) == 0:
-                balance = torch.Tensor(balance_tmp)
-            else:
-                balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
-            mean_balance = torch.mean(balance)
-
-            correct_single = torch.sum(pred == target, 0,
-                                       dtype=torch.float32) / output.size(0)
-            # 所有属性的平均准确率
-            if i == 0:
-                acc_for_each = correct_single
-            else:
-                acc_for_each = (acc_for_each + correct_single) / 2
-
-            val_correct += torch.sum(pred == target, dtype=torch.float32).item(
-            ) / 40.0  # num_classes need you to define
-
-            val_total += output.size(0)
-            cls_val_Accuracy = val_correct / val_total
-            loss_avg = sum(loss_attr) / len(loss_attr)
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
 
-            acc_dic = {'validate_accuracy': cls_val_Accuracy}
-            for ii in range(len(correct_single)):
-                acc_dic[label_list[ii]] = correct_single[ii]
-            writer.add_scalars('loss', {'validate_loss': loss_avg}, count)
-            writer.add_scalars('acc_val', acc_dic, count)
-            count += 1
             bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
-                'mbAcc: {mbAcc: .5f}'.format(
+            'top1: {top1: .5f}'.format(
                 batch=i + 1,
                 size=len(val_loader),
                 data=data_time.avg,
                 bt=batch_time.avg,
                 total=bar.elapsed_td,
                 eta=bar.eta_td,
-                loss=loss_avg,
-                mbAcc=mean_balance
+                loss=loss,
+                top1=cls_train_Accuracy
             )
             bar.next()
-    bar.finish()
-    p = tp / (tp + fp)
-    r = tp / (tp + fn)
-    f2 = 5 * p * r / (4 * p + r)
-    with open(os.path.join(args.checkpoint,'f2-val.txt'), 'a') as f:
-        f.writelines('tp: {:<7d}|tn: {:<7d}|fp: {:<7d}|fn: {:<7d}|p: {:.4f}|r: {:.4f}|f2: {:.4f}\n'.format(int(tp),int(tn),int(fp),int(fn),p,r,f2))
-    # 统计每个属性的**平均**准确率
-    b_acc_dic = {}
-    for ii in range(40):
-        b_acc_dic[label_list[ii]] = balance[ii]
-    b_acc_dic['Ave.']=torch.mean(balance).item()
-    writer.add_scalars('b_acc_val', b_acc_dic, epoch + 1)
+        bar.finish()
 
-    return (loss_avg, cls_val_Accuracy, acc_for_each, count, balance, mean_balance)
-
-def test(test_loader, model, criterion):
-    bar = Bar('Testing', max=len(test_loader))
-
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-
-    model.eval()
-
-    balance = [0] * 40
-    with torch.no_grad():
-        end = time.time()
-        val_total = 0.0
-        val_correct = 0.0
-        acc_for_each =  torch.zeros(40, device='cuda:0')
-        for i, (input, target_all) in enumerate(test_loader):
-            # measure data loading time
-            data_time.update(time.time() - end)
-
-            input = input.cuda(non_blocking=True)
-            target = target_all[0].cuda(non_blocking=True)
-
-            # compute output
-            # output = model(input)
-            output_0, output_1, output_2, output_3 = model.forward(input)
-            output_0 = output_0.view(-1, 2, 13)
-            output_1 = output_1.view(-1, 2, 6)
-            output_2 = output_2.view(-1, 2, 9)
-            output_3 = output_3.view(-1, 2, 12)
-            output = torch.cat([output_0, output_1, output_2, output_3], 2)
-
-            # measure accuracy and record loss
-            loss = 0.0
-            loss_attr = [0.0 for i in range(40)]
-            for k in range(40):
-                loss_attr[k] += criterion(output[:, :, k], target[:, k])
-                loss += loss_attr[k]
-
-            # 加入LC-loss
-            # lc_loss = 0.0
-            # for u in range(len(id_target)):
-            #     for v in range(u + 1, len(id_target)):
-            #         if id_target[u] == id_target[v]:
-            #             lc_loss += torch.sum(
-            #                 (output[u, :, :] - output[v, :, :])**2)
-            # lc_loss /= 1560  # N*(N-1)，本例中就是40*39=1560
-            # loss += lc_loss
-            loss = loss.requires_grad_()
-            _, pred = torch.max(output, 1)
-
-
-            # 计算平衡准确率
-            balance_tmp = [0] * 40
-            for iii in range(40):
-                balance_tmp[iii] = balanced_accuracy_score(target[:,iii].cpu(), pred[:,iii].cpu())
-
-            if sum(balance) == 0:
-                balance = torch.Tensor(balance_tmp)
-            else:
-                balance = (torch.Tensor(balance) + torch.Tensor(balance_tmp)) * 0.5
-            mean_balance = torch.mean(balance)
-
-            correct_single = torch.sum(pred == target, 0,
-                                       dtype=torch.float32) / output.size(0)
-            # 所有属性的平均准确率
-            if i == 0:
-                acc_for_each = correct_single
-            else:
-                acc_for_each = (acc_for_each + correct_single) / 2
-
-            val_correct += torch.sum(pred == target, dtype=torch.float32).item(
-            ) / 40.0  # num_classes need you to define
-
-            val_total += output.size(0)
-            cls_val_Accuracy = val_correct / val_total
-            loss_avg = sum(loss_attr) / len(loss_attr)
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
-                'mbAcc: {mbAcc: .5f}'.format(
-                batch=i + 1,
-                size=len(test_loader),
-                data=data_time.avg,
-                bt=batch_time.avg,
-                total=bar.elapsed_td,
-                eta=bar.eta_td,
-                loss=loss_avg,
-                mbAcc=mean_balance
-            )
-            bar.next()
-    bar.finish()
-    # 统计每个属性的**平均**准确率
-    rank(balance,'BAcc_test')
-    rank(acc_for_each,'Acc_test')
-
-    return (loss_avg, cls_val_Accuracy, acc_for_each, balance, mean_balance)
+    return (loss, cls_train_Accuracy)
 
 
 def save_checkpoint(state,
