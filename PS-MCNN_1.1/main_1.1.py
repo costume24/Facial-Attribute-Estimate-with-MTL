@@ -104,6 +104,7 @@ parser.add_argument('--prob',default=0.5,type=float)
 parser.add_argument('--adaloss',default='no', type=str)
 parser.add_argument('--prelu',default='no',type=str)
 parser.add_argument('--order',default='old',type=str)
+parser.add_argument('--xav',default='no',type=str)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -243,7 +244,9 @@ def main():
             data_path = '/media/kb541/data/xuke/LFWA/'
         elif args.place == 'mist':
             data_path = '/home/mist/LFWA//'
-    # model.apply(weight_init)
+
+    if args.xav == 'yes':
+        model.apply(weight_init)
     # define loss function (criterion) and optimizer
     if args.focal == 'yes':
         print('=> Focal loss enabled')
@@ -893,7 +896,7 @@ def weight_init(m):
         nn.init.constant_(m.bias, 0)
     # 也可以判断是否为conv2d，使用相应的初始化方式
     elif isinstance(m, nn.Conv2d):
-        nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        nn.init.xavier_normal_(m.weight)
     # 是否为批归一化层
     elif isinstance(m, nn.BatchNorm2d):
         nn.init.constant_(m.weight, 1)
