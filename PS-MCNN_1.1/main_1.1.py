@@ -111,10 +111,11 @@ parser.add_argument('-c',
                     time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime()),
                     type=str,
                     help='path to save checkpoint (default: checkpoints)')
-parser.add_argument('--resume',
+parser.add_argument('--pret',
                     default='',
-                    type=str,
-                    help='path to latest checkpoint (default: none)')
+                    type=str)
+parser.add_argument('--pres', default='', type=str)
+parser.add_argument('--pre4t', default='', type=str)
 # Miscs
 parser.add_argument('--manual-seed', type=int, help='manual seed')
 parser.add_argument('-e',
@@ -175,43 +176,50 @@ def main():
     if use_cuda:
         torch.cuda.manual_seed_all(args.manual_seed)
 
-    title = 'CelebA-psmcnn'
+
     # create model
     if args.version == 1:
         model = models.psmcnn_se_1.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-1'
+        title = args.set+'-psmcnn-1'
     elif args.version == 2:
         model = models.psmcnn_se_2.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-2'
+        title = args.set+'-psmcnn-2'
     elif args.version == 3:
         model = models.psmcnn_se_3.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-3'
+        title = args.set+'-psmcnn-3'
     elif args.version == 4:
         model = models.psmcnn_se_4.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-4'
+        title = args.set+'-psmcnn-4'
     elif args.version == 5:
         model = models.psmcnn_cbam_1.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-5'
+        title = args.set+'-psmcnn-5'
     elif args.version == 6:
         model = models.psmcnn_cbam_2.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-6'
+        title = args.set+'-psmcnn-6'
     elif args.version == 7:
-        model = models.psmcnn_cbam_3.psnet(prelu=args.prelu).to(device)   
-        title = 'CelebA-psmcnn-7'
+        model = models.psmcnn_cbam_3.psnet(prelu=args.prelu).to(device)
+        title = args.set+'-psmcnn-7'
     elif args.version == 0:
         model = models.psmcnn_baseline.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-0'
+        title = args.set+'-psmcnn-0'
     elif args.version == 8:
         model = models.psmcnn_mtl.psnet(prelu=args.prelu).to(device)
-        title = 'CelebA-psmcnn-8'  
+        title = args.set+'-psmcnn-8'
     elif args.version == 9:
         model = models.psmcnn_mtl_8.psnet().to(device)
+        title = args.set+'-psmcnn-9'
     elif args.version == 10 :
         model = models.psmcnn_mtl_16.psnet().to(device)
+        title = args.set+'-psmcnn-10'
     elif args.version == 11:
         model = models.psmcnn_mtl_64.psnet().to(device)
+        title = args.set+'-psmcnn-11'
     elif args.version == 12:
         model = models.psmcnn_mtl_v2.psnet().to(device)
+        title = args.set+'-psmcnn-12'
+    elif args.version == 20:
+        model = models.t_pretrained.psnet().to(device)
+        title = args.set+'-psmcnn-20'
     data_path = ''
     if args.set == 'c':
         if args.place == 'deepai':
@@ -234,7 +242,7 @@ def main():
         elif args.place == 'phd-1':
             data_path = '/media/kb541/data/xuke/LFWA/'
         elif args.place == 'mist':
-            data_path = '/home/mist/LFWA//'      
+            data_path = '/home/mist/LFWA//'
     # model.apply(weight_init)
     # define loss function (criterion) and optimizer
     if args.focal == 'yes':
@@ -253,32 +261,80 @@ def main():
                                  args.lr,
                                  weight_decay=args.weight_decay)
     # optionally resume from a checkpoint
+    args.checkpoint = 'checkpoints_v' + '_'.join([str(args.version), args.set,
+                                                 args.focal, args.adaloss,
+                                                 str(args.epochs), str(args.train_batch),
+                                                 str(args.lr), str(args.lr_decay)])
     if not os.path.isdir(args.checkpoint):
-        mkdir_p(args.checkpoint)
+        args.checkpoint
+        mkdir_p(args.checkpoint, 1)
 
     # resume work
-    if args.resume:
-        if os.path.isfile(args.resume):
-            print("=> loading checkpoint '{}'".format(args.resume))
-            checkpoint = torch.load(args.resume)
-            args.start_epoch = checkpoint['epoch']
-            best_prec1 = checkpoint['best_prec1']
-            model.load_state_dict(checkpoint['state_dict'])
+    if args.pres:
+        if os.path.isfile(args.pres):
+            print("=> loading checkpoint '{}'".format(args.pres))
+            checkpoint = torch.load(args.pres)
             optimizer.load_state_dict(checkpoint['optimizer'])
-            print("=> loaded checkpoint '{}' (epoch {})".format(
-                args.resume, checkpoint['epoch']))
-            args.checkpoint = os.path.dirname(args.resume)
-            logger = Logger(os.path.join(args.checkpoint, 'log.txt'),
-                            title=title,
-                            resume=True)
+
+            save_model = checkpoint['state_dict']
+
+            model_dict = model.state_dict()
+            state_dict = {}
+            for k, v in save_model.items():
+                if k in model_dict.keys() and 'fc' not in k:
+                    state_dict[k] = v
+            model_dict.update(state_dict)
+            model.load_state_dict(model_dict)
+            print("=> loaded checkpoint '{}'".format(args.pres))
         else:
-            print("=> no checkpoint found at '{}'".format(args.resume))
-    else:
-        logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
-        logger.set_names([
-            'Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.',
-            'Valid Acc.'
-        ])
+            print("=> no checkpoint found at '{}'".format(args.pres))
+    if args.pret:
+        if os.path.isfile(args.pret):
+            print("=> loading checkpoint '{}'".format(args.pret))
+            checkpoint = torch.load(args.pret)
+            optimizer.load_state_dict(checkpoint['optimizer'])
+
+            save_model = checkpoint['state_dict']
+
+            model_dict = model.state_dict()
+            state_dict = {}
+            for k, v in save_model.items():
+                if k in model_dict.keys() and 'fc' not in k:
+                    state_dict[k] = v
+            model_dict.update(state_dict)
+            model.load_state_dict(model_dict)
+            print("=> loaded checkpoint '{}'".format(args.pret))
+        else:
+            print("=> no checkpoint found at '{}'".format(args.pret))
+    if args.pre4t:
+        if os.path.isfile(args.pre4t):
+            print("=> loading checkpoint '{}'".format(args.pre4t))
+            checkpoint = torch.load(args.pre4t)
+            optimizer.load_state_dict(checkpoint['optimizer'])
+
+            save_model = checkpoint['state_dict']
+
+            model_dict = model.state_dict()
+            state_dict = {}
+            for k, v in save_model.items():
+                if 't_conv' in k or 's_conv' in k:
+                    kk = k.split('.')
+                    kk.insert(1,'0')
+                    for i in range(4):
+                        kk[1]  = str(i)
+                        kkk = '.'.join(kk)
+                        if kkk in model_dict.keys():
+                            state_dict[kkk] = v
+            model_dict.update(state_dict)
+            model.load_state_dict(model_dict)
+            print("=> loaded checkpoint '{}'".format(args.pre4t))
+        else:
+            print("=> no checkpoint found at '{}'".format(args.pre4t))
+    logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
+    logger.set_names([
+        'Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.',
+        'Valid Acc.'
+    ])
 
     cudnn.benchmark = True
 
@@ -330,7 +386,7 @@ def main():
                 transforms.RandomCrop((160, 192)),
                 transforms.ToTensor(),
                 normalize,
-            ]))     
+            ]))
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=args.train_batch,
@@ -933,7 +989,7 @@ class RandomErasing(object):
         self.sl = sl
         self.sh = sh
         self.r1 = r1
-       
+
     def __call__(self, img):
 
         if random.uniform(0, 1) > self.probability:
@@ -941,7 +997,7 @@ class RandomErasing(object):
 
         for attempt in range(100):
             area = img.size()[1] * img.size()[2]
-       
+
             target_area = random.uniform(self.sl, self.sh) * area
             aspect_ratio = random.uniform(self.r1, 1/self.r1)
 

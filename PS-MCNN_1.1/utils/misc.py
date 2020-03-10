@@ -51,13 +51,21 @@ def init_params(net):
                 init.constant(m.bias, 0)
 
 
-def mkdir_p(path):
+def mkdir_p(path, order):
     '''make dir if not exist'''
     try:
+        if order == 1:
+            path = path + '_' + str(order) + 'st'
+        elif order == 2:
+            path = path +  '_' + str(order) + 'nd'
+        elif order == 3:
+            path = path +  '_' + str(order) + 'rd'
+        elif order>3:
+            path = path +  '_' + str(order) + 'th'
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
+            mkdir_p(path, order+1)
         else:
             raise
 
