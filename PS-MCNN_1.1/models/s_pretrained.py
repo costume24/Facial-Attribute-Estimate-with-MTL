@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 # if torch.cuda.is_available():
 #     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
@@ -72,7 +72,7 @@ class psnet(nn.Module):
 
         s_0_fc2 = self.s_fc[1](s_0_fc1)
 
-        return s_0_fc2
+        return F.log_softmax(s_0_fc2, dim=1)
 
     def block(self, s_0, ind):
         s_0 = self.s_conv[ind](s_0)

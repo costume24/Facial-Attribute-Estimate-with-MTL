@@ -420,7 +420,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # compute output
         output = model(input)
         # measure accuracy and record loss
-        loss = criterion(output, target)
+        loss = F.nll_loss(output, target)
         prec1 = accuracy(output.data, target, topk = (1, ))
         losses.update(loss.data.item(), input.size(0))
         top1.update(prec1[0].data.item(), input.size(0))
