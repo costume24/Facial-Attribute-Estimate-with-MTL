@@ -27,7 +27,7 @@ from math import cos, pi
 from sklearn.metrics import balanced_accuracy_score, confusion_matrix
 
 # from prefetch_generator import BackgroundGenerator
-from celeba import CelebA, TensorSampler, data_prefetcher
+from celeb_for_s import CelebA
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 from tensorboardX import SummaryWriter
 from lfwa import LFWA
