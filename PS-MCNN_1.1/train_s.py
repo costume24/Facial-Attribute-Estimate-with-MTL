@@ -47,7 +47,7 @@ parser.add_argument('-j',
                     help='number of data loading workers (default: 4)')
 # Optimization options
 parser.add_argument('--epochs',
-                    default=30,
+                    default=1,
                     type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch',
@@ -99,7 +99,7 @@ parser.add_argument('--weight-decay',
                     type=float,
                     metavar='W',
                     help='weight decay (default: 1e-4)')
-parser.add_argument('--focal', default='yes', type=str)
+parser.add_argument('--focal', default='no', type=str)
 parser.add_argument('--use1x1', default=True, type=bool)
 parser.add_argument('--prob',default=0.5,type=float)
 parser.add_argument('--adaloss',default='no', type=str)
@@ -134,7 +134,7 @@ parser.add_argument('--gpu-id',
                     type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--version',
-                    default=1,
+                    default=30,
                     type=int,
                     help='The version of ps-mcnn architecture')
 parser.add_argument('--place',
@@ -422,7 +422,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         target = target.long()
         # compute output
         feature = model(input)
-        output = add_margin(feature)
+        output = add_margin(feature,target)
         # measure accuracy and record loss
         loss = criterion(output, target)
         prec1 = accuracy(output.data, target, topk = (1, ))
