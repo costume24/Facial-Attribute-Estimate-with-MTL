@@ -951,7 +951,7 @@ class BCEFocalLoss(torch.nn.Module):
     """
     二分类的Focalloss alpha 固定
     """
-    def __init__(self, gamma=2, alpha=0.25, reduction='sum'):
+    def __init__(self, gamma=2, alpha=0.25, reduction='mean'):
         super().__init__()
         self.gamma = gamma
         self.alpha = alpha

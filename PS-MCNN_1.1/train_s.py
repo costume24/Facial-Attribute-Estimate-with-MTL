@@ -362,161 +362,147 @@ def main():
     for epoch in range(args.start_epoch, args.epochs):
         lr = adjust_learning_rate(optimizer, epoch)
 
+
         print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, lr))
 
-        train_loss, train_acc = train(
-            train_loader, model, criterion, optimizer, epoch, writer,
-            count_train)
+        # train for one epoch
+        train_loss, train_acc = train(train_loader, model, criterion, optimizer, epoch)
 
-        val_loss, prec1 = validate(
-            val_loader, model, criterion, writer, count_val, epoch)
+        # evaluate on validation set
+        val_loss, prec1 = validate(val_loader, model, criterion)
 
+        # append logger file
         logger.append([lr, train_loss, val_loss, train_acc, prec1])
 
-        writer.add_scalar('learning_rate', lr, epoch + 1)
+        # tensorboardX
+        writer.add_scalar('learning rate', lr, epoch + 1)
+        writer.add_scalars('loss', {'train loss': train_loss, 'validation loss': val_loss}, epoch + 1)
+        writer.add_scalars('accuracy', {'train accuracy': train_acc, 'validation accuracy': prec1}, epoch + 1)
+
+
         is_best = prec1 > best_prec1
         best_prec1 = max(prec1, best_prec1)
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'arch': args.arch,
+            'state_dict': model.state_dict(),
+            'best_prec1': best_prec1,
+            'optimizer' : optimizer.state_dict(),
+        }, is_best, checkpoint=args.checkpoint)
 
-        save_checkpoint(
-            {
-                'epoch': epoch + 1,
-                'arch': 's',
-                'state_dict': model.state_dict(),
-                'best_prec1': best_prec1,
-                'optimizer': optimizer.state_dict(),
-            },
-            is_best,
-            checkpoint=args.checkpoint)
-
-    print('[*] Training task finished at ',
-          time.strftime("%Y-%m-%d %H-%M-%S", time.localtime()))
     logger.close()
     logger.plot()
     savefig(os.path.join(args.checkpoint, 'log.eps'))
     writer.close()
+
     print('Best accuracy:')
     print(best_prec1)
 
 
-def train(train_loader, model, criterion, optimizer, epoch, writer, count):
-    bar = Bar('Training', max=len(train_loader))
+def train(train_loader, model, criterion, optimizer, epoch):
+    bar = Bar('Processing', max=len(train_loader))
+
     batch_time = AverageMeter()
     data_time = AverageMeter()
+    losses = AverageMeter()
+    top1 = AverageMeter()
 
+    # switch to train mode
     model.train()
 
     end = time.time()
-
-    train_total = 0.0
-    train_correct = 0.0
-    for i, (input, target_all) in enumerate(train_loader):
-
+    for i, (input, target) in enumerate(train_loader):
         # measure data loading time
-        optimizer.zero_grad()
-
         data_time.update(time.time() - end)
-
         input = input.cuda(non_blocking=True)
-        id_target = target_all[1].cuda(non_blocking=True)
+        target = target.cuda(non_blocking=True)
+
         # compute output
-        output = model.forward(input) # (?,10178)
-
+        output = model(input)
         # measure accuracy and record loss
-        loss = 0.0
-        loss = criterion(output,id_target)
+        loss = criterion(output, target)
+        prec1 = accuracy(output.data, target, topk = (1, ))
+        losses.update(loss.data.item(), input.size(0))
+        top1.update(prec1.data.item(), input.size(0)))
 
-        loss = loss.requires_grad_()
-        _, pred = torch.max(output, 1)  # (?,40)
-        train_correct += torch.sum(
-            pred == target,
-            dtype=torch.float32).item()  # num_classes need you to define
-
-        train_total += output.size(0)
-        cls_train_Accuracy = train_correct / train_total
-
-        loss.backward()
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+        losses.backward()
         optimizer.step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
 
-        bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
-        'top1: {top1: .5f}'.format(
-            batch=i + 1,
-            size=len(train_loader),
-            data=data_time.avg,
-            bt=batch_time.avg,
-            total=bar.elapsed_td,
-            eta=bar.eta_td,
-            loss=loss,
-            top1=cls_train_Accuracy
-        )
+        # plot progress
+        bar.suffix  = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | top1: {top1: .4f}'.format(
+                    batch=i + 1,
+                    size=len(train_loader),
+                    data=data_time.avg,
+                    bt=batch_time.avg,
+                    total=bar.elapsed_td,
+                    eta=bar.eta_td,
+                    loss=losses,
+                    top1=top1,
+                    )
         bar.next()
     bar.finish()
+    return (loss_avg, prec1_avg)
 
-    return (loss, cls_train_Accuracy)
 
-
-def validate(val_loader, model, criterion, writer, count, epoch):
-    bar = Bar('Validating', max=len(val_loader))
+def validate(val_loader, model, criterion):
+    bar = Bar('Processing', max=len(val_loader))
 
     batch_time = AverageMeter()
     data_time = AverageMeter()
+    losses = [AverageMeter() for _ in range(40)]
+    top1 = [AverageMeter() for _ in range(40)]
 
+    # switch to evaluate mode
     model.eval()
 
     with torch.no_grad():
         end = time.time()
-
-        train_total = 0.0
-        train_correct = 0.0
-        for i, (input, target_all) in enumerate(val_loader):
-
+        for i, (input, target) in enumerate(val_loader):
             # measure data loading time
-
             data_time.update(time.time() - end)
 
-            input = input.cuda(non_blocking=True)
-            id_target = target_all[1].cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
+
             # compute output
-            output = model.forward(input) # (?,10178)
-
+            output = model(input)
             # measure accuracy and record loss
-            loss = 0.0
-            loss = criterion(output,id_target)
+            loss = []
+            prec1 = []
+            for j in range(len(output)):
+                loss.append(criterion(output[j], target[:, j]))
+                prec1.append(accuracy(output[j], target[:, j], topk=(1,)))
 
-            loss = loss.requires_grad_()
-            _, pred = torch.max(output, 1)  # (?,40)
-            train_correct += torch.sum(
-                pred == target,
-                dtype=torch.float32).item()  # num_classes need you to define
-
-            train_total += output.size(0)
-            cls_train_Accuracy = train_correct / train_total
-
-            loss.backward()
+                losses[j].update(loss[j].item(), input.size(0))
+                top1[j].update(prec1[j][0].item(), input.size(0))
+            losses_avg = [losses[k].avg for k in range(len(losses))]
+            top1_avg = [top1[k].avg for k in range(len(top1))]
+            loss_avg = sum(losses_avg) / len(losses_avg)
+            prec1_avg = sum(top1_avg) / len(top1_avg)
 
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
 
-            bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
-            'top1: {top1: .5f}'.format(
-                batch=i + 1,
-                size=len(val_loader),
-                data=data_time.avg,
-                bt=batch_time.avg,
-                total=bar.elapsed_td,
-                eta=bar.eta_td,
-                loss=loss,
-                top1=cls_train_Accuracy
-            )
-            bar.next()
-        bar.finish()
-
-    return (loss, cls_train_Accuracy)
-
+        # plot progress
+        bar.suffix  = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | top1: {top1: .4f}'.format(
+                    batch=i + 1,
+                    size=len(val_loader),
+                    data=data_time.avg,
+                    bt=batch_time.avg,
+                    total=bar.elapsed_td,
+                    eta=bar.eta_td,
+                    loss=loss_avg,
+                    top1=prec1_avg,
+                    )
+        bar.next()
+    bar.finish()
+    return (loss_avg, prec1_avg)
 
 def save_checkpoint(state,
                     is_best,
