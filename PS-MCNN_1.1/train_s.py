@@ -416,11 +416,12 @@ def train(train_loader, model, criterion, optimizer, epoch):
         data_time.update(time.time() - end)
         input = input.cuda(non_blocking=True)
         target = target.cuda(non_blocking=True)
-
+        target = target.squeeze(1)
+        target = target.long()
         # compute output
         output = model(input)
         # measure accuracy and record loss
-        loss = criterion(output, target.squeeze(1).long())
+        loss = criterion(output, target)
         prec1 = accuracy(output.data, target, topk = (1, ))
         losses.update(loss.data.item(), input.size(0))
         top1.update(prec1[0].data.item(), input.size(0))
