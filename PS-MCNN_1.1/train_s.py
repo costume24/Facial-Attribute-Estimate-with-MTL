@@ -161,7 +161,7 @@ attr_order = [
 
 
 def main():
-    global args, best_prec1, best_train_acc, best_b_acc_val
+    global args, best_prec1, best_train_acc, best_b_acc_val, add_margin
     args = parser.parse_args()
 
     # Use CUDA
@@ -180,6 +180,7 @@ def main():
     # create model
     if args.version == 30:
         model = models.s_pretrained.psnet().to(device)
+        add_margin = AddMarginProduct(512,10177).to(device)
         title = args.set+'-psmcnn-30'
 
     data_path = ''
@@ -419,7 +420,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
         target = target.squeeze(1)
         target = target.long()
         # compute output
-        output = model(input)
+        feature = model(input)
+        output = add_margin(feature)
         # measure accuracy and record loss
         loss = criterion(output, target)
         prec1 = accuracy(output.data, target, topk = (1, ))
@@ -670,5 +672,45 @@ class RandomErasing(object):
 
         return img
 
+class AddMarginProduct(nn.Module):
+    r"""Implement of large margin cosine distance: :
+    Args:
+        in_features: size of each input sample
+        out_features: size of each output sample
+        s: norm of input feature
+        m: margin
+        cos(theta) - m
+    """
+
+    def __init__(self, in_features, out_features, s=30.0, m=0.40):
+        super(AddMarginProduct, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.s = s
+        self.m = m
+        self.weight = Parameter(torch.FloatTensor(out_features, in_features))
+        nn.init.xavier_uniform_(self.weight)
+
+    def forward(self, input, label):
+        # --------------------------- cos(theta) & phi(theta) ---------------------------
+        cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+        phi = cosine - self.m
+        # --------------------------- convert label to one-hot ---------------------------
+        one_hot = torch.zeros(cosine.size(), device='cuda')
+        # one_hot = one_hot.cuda() if cosine.is_cuda else one_hot
+        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        # -------------torch.where(out_i = {x_i if condition_i else y_i) -------------
+        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+        output *= self.s
+        # print(output)
+
+        return output
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(' \
+               + 'in_features=' + str(self.in_features) \
+               + ', out_features=' + str(self.out_features) \
+               + ', s=' + str(self.s) \
+               + ', m=' + str(self.m) + ')'
 if __name__ == '__main__':
     main()

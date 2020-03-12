@@ -43,7 +43,7 @@ class psnet(nn.Module):
             conv3(288, 128)
         ])  # (5,),s支路的5个卷积层
         self.s_fc = nn.ModuleList([nn.Linear(4800, 1024),
-                                   nn.Linear(1024, 10177)])  # (2,)，s支路的2个FC层
+                                   nn.Linear(1024, 512)])  # (2,)，s支路的2个FC层
 
         self.conv_1x1 = nn.ModuleList([
             conv1(32, 64),
