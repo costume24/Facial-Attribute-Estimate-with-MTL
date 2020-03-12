@@ -72,7 +72,7 @@ class psnet(nn.Module):
 
         s_0_fc2 = self.s_fc[1](s_0_fc1)
 
-        return F.log_softmax(s_0_fc2, dim=1)
+        return s_0_fc2
 
     def block(self, s_0, ind):
         s_0 = self.s_conv[ind](s_0)
