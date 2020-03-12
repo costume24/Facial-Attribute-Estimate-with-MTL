@@ -442,12 +442,12 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     bt=batch_time.avg,
                     total=bar.elapsed_td,
                     eta=bar.eta_td,
-                    loss=losses,
-                    top1=top1,
+                    loss=loss,
+                    top1=prec1[0],
                     )
         bar.next()
     bar.finish()
-    return (loss_avg, prec1_avg)
+    return (loss, prec1[0])
 
 
 def validate(val_loader, model, criterion):

@@ -7,8 +7,8 @@ __all__ = ['accuracy']
 def accuracy(output, target, topk=(1, )):
     """Computes the precision@k for the specified values of k"""
     with torch.no_grad():
-        print(output.shape)
-        print(target.shape)
+        # print(output.shape)
+        # print(target.shape)
 
         maxk = max(topk)
         batch_size = target.size(0)
