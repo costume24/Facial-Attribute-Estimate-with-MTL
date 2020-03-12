@@ -212,7 +212,7 @@ def main():
         criterion = BCEFocalLoss().cuda()
     else:
         print('=> CrossEntrypy loss enabled')
-        criterion = nn.CrossEntropyLoss().cuda()
+        criterion = nn.BCELoss().cuda()
 
 
     # optimizer = torch.optim.SGD(model.parameters(),
