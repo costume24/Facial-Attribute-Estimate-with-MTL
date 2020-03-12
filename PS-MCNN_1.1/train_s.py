@@ -22,6 +22,7 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torch.nn.functional as F
+from torch.nn import Parameter
 import models
 from math import cos, pi
 from sklearn.metrics import balanced_accuracy_score, confusion_matrix
