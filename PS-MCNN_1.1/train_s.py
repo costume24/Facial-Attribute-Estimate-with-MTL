@@ -423,7 +423,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         loss = criterion(output, target)
         prec1 = accuracy(output.data, target, topk = (1, ))
         losses.update(loss.data.item(), input.size(0))
-        top1.update(prec1.data.item(), input.size(0)))
+        top1.update(prec1.data.item(), input.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
