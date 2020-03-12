@@ -212,7 +212,7 @@ def main():
         criterion = BCEFocalLoss().cuda()
     else:
         print('=> CrossEntrypy loss enabled')
-        criterion = nn.BCELoss().cuda()
+        criterion = nn.CrossEntropyLoss().cuda()
 
 
     # optimizer = torch.optim.SGD(model.parameters(),
@@ -420,7 +420,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # compute output
         output = model(input)
         # measure accuracy and record loss
-        loss = criterion(output, target)
+        loss = criterion(output, target.squeeze(1).long())
         prec1 = accuracy(output.data, target, topk = (1, ))
         losses.update(loss.data.item(), input.size(0))
         top1.update(prec1[0].data.item(), input.size(0))
@@ -464,26 +464,22 @@ def validate(val_loader, model, criterion):
     with torch.no_grad():
         end = time.time()
         for i, (input, target) in enumerate(val_loader):
-            # measure data loading time
             data_time.update(time.time() - end)
-
+            input = input.cuda(non_blocking=True)
             target = target.cuda(non_blocking=True)
 
             # compute output
             output = model(input)
             # measure accuracy and record loss
-            loss = []
-            prec1 = []
-            for j in range(len(output)):
-                loss.append(criterion(output[j], target[:, j]))
-                prec1.append(accuracy(output[j], target[:, j], topk=(1,)))
+            loss = criterion(output, target.squeeze(1).long())
+            prec1 = accuracy(output.data, target, topk = (1, ))
+            losses.update(loss.data.item(), input.size(0))
+            top1.update(prec1[0].data.item(), input.size(0))
 
-                losses[j].update(loss[j].item(), input.size(0))
-                top1[j].update(prec1[j][0].item(), input.size(0))
-            losses_avg = [losses[k].avg for k in range(len(losses))]
-            top1_avg = [top1[k].avg for k in range(len(top1))]
-            loss_avg = sum(losses_avg) / len(losses_avg)
-            prec1_avg = sum(top1_avg) / len(top1_avg)
+            # compute gradient and do SGD step
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
             # measure elapsed time
             batch_time.update(time.time() - end)
@@ -497,12 +493,12 @@ def validate(val_loader, model, criterion):
                     bt=batch_time.avg,
                     total=bar.elapsed_td,
                     eta=bar.eta_td,
-                    loss=loss_avg,
-                    top1=prec1_avg,
+                    loss=loss,
+                    top1=prec1[0],
                     )
         bar.next()
     bar.finish()
-    return (loss_avg, prec1_avg)
+    return (loss, prec1[0])
 
 def save_checkpoint(state,
                     is_best,
