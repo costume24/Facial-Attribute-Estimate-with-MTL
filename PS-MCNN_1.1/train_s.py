@@ -420,14 +420,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # compute output
         output = model(input)
         # measure accuracy and record loss
-        loss = criterion(output, target)
+        loss = criterion(output, torch.max(target, 1)[1])
         prec1 = accuracy(output.data, target, topk = (1, ))
         losses.update(loss.data.item(), input.size(0))
-        top1.update(prec1.data.item(), input.size(0))
+        top1.update(prec1[0].data.item(), input.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
-        losses.backward()
+        loss.backward()
         optimizer.step()
 
         # measure elapsed time
