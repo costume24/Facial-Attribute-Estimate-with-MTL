@@ -71,7 +71,7 @@ class psnet(nn.Module):
                                    nn.Conv2d(256, 256, 3, 1, 1, bias=False),
                                    nn.Conv2d(256, 256, 3, 1, 1, bias=False),
                                    nn.Conv2d(256, 288, 3, 1, 1, bias=False))  
-        self.more = nn.ModuleList([self.more1,self.more2,self.more3,self.more4]) 
+        self.more = nn.ModuleList([self.more1,self.more2,self.more3,self.more4,self.more5]) 
     def forward(self, input):
         s_1 = self.block(input, 0)
 
