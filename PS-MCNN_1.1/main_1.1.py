@@ -219,7 +219,7 @@ def main():
         model = models.psmcnn_mtl_v2.psnet().to(device)
         title = args.set+'-psmcnn-12'
     elif args.version == 13:
-        model = models.psmcnn_mtl_v13.psnet().to(device)
+        model = models.psmcnn_v13.psnet().to(device)
         title = args.set+'-psmcnn-13'
     elif args.version == 20:
         model = models.t_pretrained.psnet().to(device)
