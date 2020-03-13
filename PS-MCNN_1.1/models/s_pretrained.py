@@ -34,7 +34,6 @@ class psnet(nn.Module):
         self.use_1x1 = use_1x1
         self.pool = nn.MaxPool2d(2, 2)
         conv3 = conv_3x3_bn
-        conv1 = conv_1x1_bn
         self.s_conv = nn.ModuleList([
             conv3(3, 32),
             conv3(64, 64),
@@ -45,16 +44,34 @@ class psnet(nn.Module):
         self.s_fc = nn.ModuleList([nn.Linear(4800, 1024),
                                    nn.Linear(1024, 512)])  # (2,)，s支路的2个FC层
 
-        self.conv_1x1 = nn.ModuleList([
-            conv1(32, 64),
-            conv1(64, 96),
-            conv1(128, 160),
-            conv1(256, 288),
-            conv1(128,160)
-        ])
-
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-
+        # self.conv_1x1 = nn.ModuleList([
+        #     conv1(32, 64),
+        #     conv1(64, 96),
+        #     conv1(128, 160),
+        #     conv1(256, 288),
+        #     conv1(128,160)
+        # ])
+        self.more1 = nn.Sequential(nn.Conv2d(32, 32, 3, 1, 1, bias=False),
+                                   nn.Conv2d(32, 32, 3, 1, 1, bias=False),
+                                   nn.Conv2d(32, 32, 3, 1, 1, bias=False),
+                                   nn.Conv2d(32, 32, 3, 1, 1, bias=False))
+        self.more2 = nn.Sequential(nn.Conv2d(32, 32, 3, 1, 1, bias=False),
+                                   nn.Conv2d(32, 32, 3, 1, 1, bias=False),
+                                   nn.Conv2d(32, 32, 3, 1, 1, bias=False),
+                                   nn.Conv2d(32, 64, 3, 1, 1, bias=False))
+        self.more3 = nn.Sequential(nn.Conv2d(64, 64, 3, 1, 1, bias=False),
+                                   nn.Conv2d(64, 64, 3, 1, 1, bias=False),
+                                   nn.Conv2d(64, 64, 3, 1, 1, bias=False),
+                                   nn.Conv2d(64, 96, 3, 1, 1, bias=False))
+        self.more4 = nn.Sequential(nn.Conv2d(128, 128, 3, 1, 1, bias=False),
+                                   nn.Conv2d(128, 128, 3, 1, 1, bias=False),
+                                   nn.Conv2d(128, 128, 3, 1, 1, bias=False),
+                                   nn.Conv2d(128, 160, 3, 1, 1, bias=False))  
+        self.more5 = nn.Sequential(nn.Conv2d(256, 256, 3, 1, 1, bias=False),
+                                   nn.Conv2d(256, 256, 3, 1, 1, bias=False),
+                                   nn.Conv2d(256, 256, 3, 1, 1, bias=False),
+                                   nn.Conv2d(256, 288, 3, 1, 1, bias=False))  
+        self.more = nn.ModuleList([self.more1,self.more2,self.more3,self.more4]) 
     def forward(self, input):
         s_1 = self.block(input, 0)
 
@@ -75,7 +92,12 @@ class psnet(nn.Module):
         return s_0_fc2
 
     def block(self, s_0, ind):
-        s_0 = self.s_conv[ind](s_0)
-        s_0 = self.pool(s_0)
-        s_0 = self.conv_1x1[ind](s_0)
+        if ind == 0:
+            s_0 = self.s_conv[ind](s_0)
+            s_0 = self.more[ind](s_0)
+            s_0 = self.pool(s_0)
+        else:
+            s_0 = self.more[ind](s_0)
+            s_0 = self.s_conv[ind](s_0)
+            s_0 = self.pool(s_0)
         return s_0
