@@ -134,7 +134,7 @@ class psnet(nn.Module):
         s_0 = self.s_conv[ind](s_0)
         s_0 = self.pool(s_0)
 
-        if ind>2:
+        if ind>3:
             t_0, _ = cross(t_0, s_0)
             t_1, _ = cross(t_1, s_0)
             t_2, _ = cross(t_2, s_0)
