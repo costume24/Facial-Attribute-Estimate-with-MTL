@@ -274,6 +274,12 @@ def main():
                                                  args.focal, args.adaloss,
                                                  str(args.epochs), str(args.train_batch),
                                                  '{:.0e}'.format(args.lr), str(args.lr_decay), args.xav])
+    if args.pres:
+        args.checkpoint += '_s-pre'
+    if args.pret:
+        args.checkpoint += '_t-pre'
+    if args.pre4t:
+        args.checkpoint += '_4t-pre'
     if not os.path.isdir(args.checkpoint):
         args.checkpoint = mkdir_p(args.checkpoint, 1)
 
@@ -596,8 +602,9 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         acc_dic = {'train_accuracy': cls_train_Accuracy}
         for ii in range(len(correct_single)):
             acc_dic[label_list[ii]] = correct_single[ii]
-        writer.add_scalars('loss', {'train_loss': loss_avg}, count)
-        writer.add_scalars('acc_train', acc_dic, count)
+        if count % 100 == 0:
+            writer.add_scalars('loss', {'train_loss': loss_avg}, count)
+            writer.add_scalars('acc_train', acc_dic, count)
         count += 1
 
         bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
@@ -721,8 +728,9 @@ def validate(val_loader, model, criterion, writer, count, epoch):
             acc_dic = {'validate_accuracy': cls_val_Accuracy}
             for ii in range(len(correct_single)):
                 acc_dic[label_list[ii]] = correct_single[ii]
-            writer.add_scalars('loss', {'validate_loss': loss_avg}, count)
-            writer.add_scalars('acc_val', acc_dic, count)
+            if count % 100 == 0:
+                writer.add_scalars('loss', {'validate_loss': loss_avg}, count)
+                writer.add_scalars('acc_val', acc_dic, count)
             count += 1
             bar.suffix = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss: {loss:.4f} | '\
                 'mbAcc: {mbAcc: .5f}'.format(
