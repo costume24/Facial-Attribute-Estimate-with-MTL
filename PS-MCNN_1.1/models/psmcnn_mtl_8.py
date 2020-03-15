@@ -57,10 +57,10 @@ class psnet(nn.Module):
         self.tconv_1x1 = nn.ModuleList() # (4,4)，用1x1卷积进行降维，取代原来的取前32个通道
         for _ in range(4):
             tmp = nn.ModuleList([
-                conv1(32, 8),
-                conv1(64, 8),
-                conv1(128, 8),
-                conv1(256, 8)
+                conv1(32, 32),
+                conv1(64, 32),
+                conv1(128, 32),
+                conv1(256, 32)
             ])
             self.tconv_1x1.append(tmp)
 
