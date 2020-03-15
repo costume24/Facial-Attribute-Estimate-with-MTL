@@ -221,9 +221,6 @@ def main():
     elif args.version == 13:
         model = models.psmcnn_v13.psnet().to(device)
         title = args.set+'-psmcnn-13'
-    elif args.version == 14:
-        model = models.psmcnn_cross_1.psnet().to(device)
-        title = args.set+'-psmcnn-14'
     elif args.version == 20:
         model = models.t_pretrained.psnet().to(device)
         title = args.set+'-psmcnn-20'

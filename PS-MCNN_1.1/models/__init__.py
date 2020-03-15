@@ -20,6 +20,5 @@ from models.psmcnn_mtl_v2 import *
 from models.t_pretrained import *
 from models.s_pretrained import *
 from models.psmcnn_v13 import *
-from models.psmcnn_cross_1 import *
 
 
