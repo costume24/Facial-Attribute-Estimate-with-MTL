@@ -77,7 +77,7 @@ parser.add_argument('--step',
 parser.add_argument('--schedule',
                     type=int,
                     nargs='+',
-                    default=[12, 22],
+                    default=[10, 20, 30],
                     help='decrease learning rate at these epochs.')
 parser.add_argument('--turning-point',
                     type=int,
@@ -221,6 +221,9 @@ def main():
     elif args.version == 13:
         model = models.psmcnn_v13.psnet().to(device)
         title = args.set+'-psmcnn-13'
+    elif args.version == 14:
+        model = models.psmcnn_v14.psnet().to(device)
+        title = args.set+'-psmcnn-14'
     elif args.version == 20:
         model = models.t_pretrained.psnet().to(device)
         title = args.set+'-psmcnn-20'
