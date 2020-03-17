@@ -21,5 +21,6 @@ from models.t_pretrained import *
 from models.s_pretrained import *
 from models.psmcnn_v13 import *
 from models.psmcnn_v14 import *
+from models.psmcnn_v15 import *
 
 
