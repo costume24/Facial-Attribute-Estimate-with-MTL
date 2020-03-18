@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 
+# if torch.cuda.is_available():
+#     torch.set_default_tensor_type('torch.cuda.FloatTensor')
+
 
 def conv_3x3_bn(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
@@ -47,7 +50,6 @@ class psnet(nn.Module):
             conv3(256, 256),
             conv3(384, 128)
         ])  # (5,),s支路的5个卷积层
-
         self.t_fc = nn.ModuleList()  # (4,2)，每一行是一个t支路的2个FC层
         self.s_fc = nn.ModuleList([nn.Linear(3840, 512),
                                    nn.Linear(512, 512)])  # (2,)，s支路的2个FC层
@@ -61,7 +63,15 @@ class psnet(nn.Module):
                 conv1(256, 32)
             ])
             self.tconv_1x1.append(tmp)
-
+        for _ in range(4):
+            tmp = nn.ModuleList([
+                conv3(3, 32),
+                conv3(64, 64),
+                conv3(128, 128),
+                conv3(256, 256),
+                conv3(512, 128)
+            ])
+            self.t_conv.append(tmp)
         self.sconv_3x3 = nn.ModuleList()
         for _ in range(4):
             tmp = nn.ModuleList([
@@ -71,47 +81,47 @@ class psnet(nn.Module):
                 conv3(256, 32)
             ])
             self.sconv_3x3.append(tmp)
-
-        for _ in range(4):
-            tmp = nn.ModuleList([
-                conv3(3, 32),
-                conv3(64, 64),
-                conv3(96, 128),
-                conv3(160, 256),
-                conv3(288, 128)
-            ])
-            self.t_conv.append(tmp)
-
         for _ in range(4):
             tmp = nn.ModuleList([nn.Linear(3840, 512), nn.Linear(512, 512)])
             self.t_fc.append(tmp)
-        self.se_list = nn.ModuleList(
-                [SELayer(128),
-                 SELayer(128),
-                 SELayer(128),
-                 SELayer(128)])
+
         self.group = nn.ModuleList([
             nn.Linear(1024, 26),
             nn.Linear(1024, 12),
             nn.Linear(1024, 18),
             nn.Linear(1024, 24)
         ])
+
+        self.se_list = nn.ModuleList()  # (4,4), 仅在t支路上加入se模块
+        for _ in range(4):
+            tmp = nn.ModuleList(
+                [SELayer(64),
+                 SELayer(128),
+                 SELayer(256),
+                 SELayer(512)])
+            self.se_list.append(tmp)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, input):
         self.output = []
         block_1, s_1 = self.block([input, input, input, input], input, 0)
+        for i in range(4):
+            block_1[i] = self.se_list[i][0](block_1[i])
 
         block_2, s_2 = self.block(block_1, s_1, 1)
+        for i in range(4):
+            block_2[i] = self.se_list[i][1](block_2[i])
 
         block_3, s_3 = self.block(block_2, s_2, 2)
+        for i in range(4):
+            block_3[i] = self.se_list[i][2](block_3[i])
 
         block_4, s_4 = self.block(block_3, s_3, 3)
+        for i in range(4):
+            block_4[i] = self.se_list[i][3](block_4[i])
 
         block_5, s_5 = self.block(block_4, s_4, 4)
 
-        for i in range(4):
-            block_5[i] = self.se_list[i](block_5[i])
         for i in range(4):
             _size = block_5[i].size()
             block_5[i] = block_5[i].view(-1, _size[1] * _size[2] * _size[3])
@@ -127,11 +137,16 @@ class psnet(nn.Module):
 
         for i in range(4):
             self.output.append(torch.cat([block_5[i], s_0_fc2], 1))
+        # output_4 = torch.cat([s_0_fc2, s_0_fc2], 1)
 
         for i in range(4):
             self.output[i] = self.group[i](self.output[i])
+        # a=torch.cat()
         output_0, output_1, output_2, output_3 = self.output
         return output_0, output_1, output_2, output_3
+        # logit = torch.cat([output_0, output_1, output_2, output_3], 1)
+
+        # return logit
 
     def block(self, inp, s_0, ind):
         t_0, t_1, t_2, t_3 = inp
