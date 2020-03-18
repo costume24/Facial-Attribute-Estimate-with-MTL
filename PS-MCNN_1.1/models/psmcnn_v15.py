@@ -67,9 +67,9 @@ class psnet(nn.Module):
             tmp = nn.ModuleList([
                 conv3(3, 32),
                 conv3(64, 64),
-                conv3(128, 128),
-                conv3(256, 256),
-                conv3(512, 128)
+                conv3(96, 128),
+                conv3(160, 256),
+                conv3(288, 128)
             ])
             self.t_conv.append(tmp)
         self.sconv_3x3 = nn.ModuleList()
@@ -96,9 +96,9 @@ class psnet(nn.Module):
         for _ in range(4):
             tmp = nn.ModuleList(
                 [SELayer(64),
-                 SELayer(128),
-                 SELayer(256),
-                 SELayer(512)])
+                 SELayer(96),
+                 SELayer(160),
+                 SELayer(288)])
             self.se_list.append(tmp)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
