@@ -233,6 +233,8 @@ def main():
     elif args.version == 20:
         model = models.t_pretrained.psnet().to(device)
         title = args.set+'-psmcnn-20'
+    
+    model = torch.nn.parallel.DistributedDataParallel(model)
     data_path = ''
     if args.set == 'c':
         if args.place == 'deepai':
