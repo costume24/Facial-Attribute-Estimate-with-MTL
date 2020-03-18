@@ -298,7 +298,7 @@ def main():
             checkpoint = torch.load(args.pres)
             # optimizer.load_state_dict(checkpoint['optimizer'])
 
-            save_model = checkpoint['state_dict']
+            save_model = checkpoint['net_state_dict']
 
             model_dict = model.state_dict()
             state_dict = {}
