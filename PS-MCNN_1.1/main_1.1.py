@@ -339,14 +339,16 @@ def main():
             model_dict = model.state_dict()
             state_dict = {}
             for k, v in save_model.items():
-                if 't_conv' in k:
-                    kk = k.split('.')
-                    kk.insert(1,'0')
-                    for i in range(4):
-                        kk[1]  = str(i)
-                        kkk = '.'.join(kk)
-                        if kkk in model_dict.keys():
-                            state_dict[kkk] = v
+                if 't_conv' in k and 'running' not in k and 'num' not in k:
+                    kk = k.split('.')[1:]
+                    if kk[-2] == '0':
+                        kk.insert(1, '0')
+                        for i in range(4):
+                            kk[1] = str(i)
+                            kkk = '.'.join(kk)
+                            if kkk in model_dict.keys():
+                                print(kkk)
+                                state_dict[kkk] = v
             model_dict.update(state_dict)
             model.load_state_dict(model_dict)
             print("=> loaded checkpoint '{}'".format(args.pre4t))
