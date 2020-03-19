@@ -340,7 +340,9 @@ def main():
             state_dict = {}
             for k, v in save_model.items():
                 if 't_conv' in k and 'running' not in k and 'num' not in k:
-                    kk = k.split('.')[1:]
+                    kk = k.split('.')
+                    if 'module' in k:
+                        kk = kk[1:]
                     if kk[-2] == '0':
                         kk.insert(1, '0')
                         for i in range(4):
