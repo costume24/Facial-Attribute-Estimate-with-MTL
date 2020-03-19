@@ -122,9 +122,9 @@ class psnet(nn.Module):
             block_4[i] = block_4[i] + self.se_list[i][3](block_4[i])
 
         block_5, s_5 = self.block(block_4, s_4, 4)
-            for i in range(4):
-                block_5[i] = block_5[i] + self.se_list[i][4](block_5[i])
-                
+        for i in range(4):
+            block_5[i] = block_5[i] + self.se_list[i][4](block_5[i])
+
         for i in range(4):
             _size = block_5[i].size()
             block_5[i] = block_5[i].view(-1, _size[1] * _size[2] * _size[3])
