@@ -304,7 +304,7 @@ def main():
             state_dict = {}
             for k, v in save_model.items():
                 k = 'module.' + k
-                if k in model_dict.keys() and 's_conv' in k:
+                if k in model_dict.keys() and 's_conv' in k and 'running' not in k and 'num' not in k and 'bias' not in k:
                     state_dict[k] = v
             model_dict.update(state_dict)
             model.load_state_dict(model_dict)
@@ -340,7 +340,7 @@ def main():
             model_dict = model.state_dict()
             state_dict = {}
             for k, v in save_model.items():
-                if 't_conv' in k and 'running' not in k and 'num' not in k:
+                if 't_conv' in k and 'running' not in k and 'num' not in k and 'bias' not in k:
                     kk = k.split('.')
                     if 'module' not in k:
                         kk.insert(0,'module')
