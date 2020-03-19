@@ -134,7 +134,7 @@ parser.add_argument('--gpu-id',
                     type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--version',
-                    default=1,
+                    default=14,
                     type=int,
                     help='The version of ps-mcnn architecture')
 parser.add_argument('--place',
@@ -344,9 +344,9 @@ def main():
                     if 'module' not in k:
                         kk.insert(0,'module')
                     if kk[-2] == '0':
-                        kk.insert(1, '0')
+                        kk.insert(2, '0')
                         for i in range(4):
-                            kk[1] = str(i)
+                            kk[2] = str(i)
                             kkk = '.'.join(kk)
                             if kkk in model_dict.keys():
                                 print(kkk)
