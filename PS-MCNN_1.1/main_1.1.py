@@ -233,7 +233,10 @@ def main():
     elif args.version == 20:
         model = models.t_pretrained.psnet().to(device)
         title = args.set+'-psmcnn-20'
-    
+    elif args.version == 51:
+        model = models.psmcnn_v51.psnet().to(device)
+        title = args.set+'-psmcnn-51'
+        
     model = torch.nn.DataParallel(model)
     data_path = ''
     if args.set == 'c':
