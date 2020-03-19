@@ -341,8 +341,8 @@ def main():
             for k, v in save_model.items():
                 if 't_conv' in k and 'running' not in k and 'num' not in k:
                     kk = k.split('.')
-                    if 'module' in k:
-                        kk = kk[1:]
+                    if 'module' not in k:
+                        kk.insert(0,'module')
                     if kk[-2] == '0':
                         kk.insert(1, '0')
                         for i in range(4):
