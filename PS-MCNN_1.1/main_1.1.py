@@ -302,12 +302,16 @@ def main():
 
             model_dict = model.state_dict()
             state_dict = {}
+            flag = 0
             for k, v in save_model.items():
                 k = 'module.' + k
                 if k in model_dict.keys() and 's_conv' in k and 'running' not in k and 'num' not in k and 'bias' not in k:
+                    flag = 1
                     state_dict[k] = v
             model_dict.update(state_dict)
             model.load_state_dict(model_dict)
+            if flag == 1:
+                print('=>Success!')
             print("=> loaded checkpoint '{}'".format(args.pres))
         else:
             print("=> no checkpoint found at '{}'".format(args.pres))
