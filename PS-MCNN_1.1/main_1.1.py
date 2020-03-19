@@ -303,6 +303,7 @@ def main():
             model_dict = model.state_dict()
             state_dict = {}
             for k, v in save_model.items():
+                k = 'module.' + k
                 if k in model_dict.keys() and 's_conv' in k:
                     state_dict[k] = v
             model_dict.update(state_dict)
