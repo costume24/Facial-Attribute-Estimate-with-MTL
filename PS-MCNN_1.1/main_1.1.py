@@ -321,11 +321,15 @@ def main():
 
             model_dict = model.state_dict()
             state_dict = {}
+            flag = 0
             for k, v in save_model.items():
                 if k in model_dict.keys() and 't_conv' in k:
+                    flag = 1
                     state_dict[k] = v
             model_dict.update(state_dict)
             model.load_state_dict(model_dict)
+            if flag == 1:
+                print('=>Success!')
             print("=> loaded checkpoint '{}'".format(args.pret))
         else:
             print("=> no checkpoint found at '{}'".format(args.pret))
@@ -339,6 +343,7 @@ def main():
 
             model_dict = model.state_dict()
             state_dict = {}
+            flag = 0
             for k, v in save_model.items():
                 if 't_conv' in k and 'running' not in k and 'num' not in k and 'bias' not in k:
                     kk = k.split('.')
@@ -350,10 +355,12 @@ def main():
                             kk[2] = str(i)
                             kkk = '.'.join(kk)
                             if kkk in model_dict.keys():
-                                print(kkk)
+                                flag = 1
                                 state_dict[kkk] = v
             model_dict.update(state_dict)
             model.load_state_dict(model_dict)
+            if flag == 1:
+                print('=>Success!')
             print("=> loaded checkpoint '{}'".format(args.pre4t))
         else:
             print("=> no checkpoint found at '{}'".format(args.pre4t))
