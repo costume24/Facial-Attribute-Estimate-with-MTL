@@ -102,7 +102,7 @@ parser.add_argument('--focal', default='yes', type=str)
 parser.add_argument('--use1x1', default=True, type=bool)
 parser.add_argument('--prob',default=0.5,type=float)
 parser.add_argument('--adaloss',default='no', type=str)
-parser.add_argument('--prelu',default='no',type=str)
+parser.add_argument('--prelu',default='yes',type=str)
 parser.add_argument('--order',default='old',type=str)
 parser.add_argument('--xav',default='no',type=str)
 # Checkpoints
@@ -236,6 +236,9 @@ def main():
     elif args.version == 51:
         model = models.psmcnn_v51.psnet().to(device)
         title = args.set+'-psmcnn-51'
+    elif args.version == 52:
+        model = models.psmcnn_v52.psnet().to(device)
+        title = args.set+'-psmcnn-52'
         
     model = torch.nn.DataParallel(model)
     data_path = ''
@@ -284,7 +287,7 @@ def main():
     args.checkpoint = 'checkpoints_dual_v' + '_'.join([str(args.version), args.set,
                                                  args.focal, args.adaloss,
                                                  str(args.epochs), str(args.train_batch),
-                                                 '{:.0e}'.format(args.lr), str(args.lr_decay), args.xav])
+                                                 '{:.0e}'.format(args.lr), str(args.lr_decay), args.prelu])
     if args.pres:
         args.checkpoint += '_s-pre'
     if args.pret:
