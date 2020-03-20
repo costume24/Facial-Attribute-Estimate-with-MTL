@@ -345,8 +345,10 @@ def main():
             print("=> loading checkpoint '{}'".format(args.pre4t))
             checkpoint = torch.load(args.pre4t)
             # optimizer.load_state_dict(checkpoint['optimizer'])
-
-            save_model = checkpoint['state_dict']
+            try:
+                save_model = checkpoint['state_dict']
+            except:
+                save_model = checkpoint['net_state_dict']
 
             model_dict = model.state_dict()
             state_dict = {}
