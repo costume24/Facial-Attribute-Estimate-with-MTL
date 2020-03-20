@@ -331,7 +331,7 @@ def main():
     best_b_acc_of_each_val = torch.zeros(40, device='cuda:0')
     for epoch in range(args.start_epoch, args.epochs):
 
-        print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, lr))
+        print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, 0.1))
 
         val_loss, prec1, each_val, count_val, b_acc_of_each_val, mb_val = validate(
             val_loader, model, criterion, count_val, epoch)
@@ -453,7 +453,7 @@ def validate(val_loader, model, criterion, count, epoch):
                 mbAcc=mean_balance
             )
             bar.next()
-        acc_for_each /= val_total
+        acc_for_each /= (i+1)
     bar.finish()
     p = tp / (tp + fp)
     r = tp / (tp + fn)
