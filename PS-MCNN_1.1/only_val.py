@@ -113,7 +113,9 @@ parser.add_argument('-c',
                     type=str,
                     help='path to save checkpoint (default: checkpoints)')
 
-parser.add_argument('--pre4t', default='', type=str)
+parser.add_argument('--pre4t',
+                    default='./checkpoints_dual_v14_c_no_no_30_64_5e-04_step_no_s-pre_4t-pre_1st/model_best.pth.tar',
+                    type=str)
 # Miscs
 parser.add_argument('--manual-seed', type=int, help='manual seed')
 parser.add_argument('-e',
@@ -232,7 +234,7 @@ def main():
     elif args.version == 51:
         model = models.psmcnn_v51.psnet().to(device)
         title = args.set+'-psmcnn-51'
-        
+
     model = torch.nn.DataParallel(model)
     data_path = ''
     if args.set == 'c':
@@ -287,11 +289,25 @@ def main():
             except:
                 save_model = checkpoint['net_state_dict']
 
-            # model_dict = model.state_dict()
-            # state_dict = {}
+            model_dict = model.state_dict()
+            hold = ''
+            for k in save_model.keys():
+                hold = k
+                break
+            for k in model_dict.keys():
+                if 'module' in k and 'module' not in hold:
+                    state_dict = {
+                        'module.' + j: v for j, v in save_model.items() if 'module.' + j in model_dict.keys()
+                    }
+                    for j in state_dict.keys():
+                        print(j)
+                        break
+                    model_dict.update(state_dict)
+                    model.load_state_dict(model_dict)
+                else:
+                    model.load_state_dict(save_model)
 
-            # model_dict.update(state_dict)
-            model.load_state_dict(save_model)
+                break
             print("=> loaded checkpoint '{}'".format(args.pre4t))
         else:
             print("=> no checkpoint found at '{}'".format(args.pre4t))
