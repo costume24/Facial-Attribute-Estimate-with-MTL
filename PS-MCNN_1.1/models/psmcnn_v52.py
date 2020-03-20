@@ -107,16 +107,16 @@ class psnet(nn.Module):
         s_1 = s_1 + self.se_list[0](s_1)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
-        s_2 = s_2 + self.se_list[1](s_1)
+        s_2 = s_2 + self.se_list[1](s_2)
 
         block_3, s_3 = self.block(block_2, s_2, 2)
-        s_3 = s_3 + self.se_list[2](s_2)
+        s_3 = s_3 + self.se_list[2](s_3)
 
         block_4, s_4 = self.block(block_3, s_3, 3)
-        s_4 = s_4 + self.se_list[3](s_3)
+        s_4 = s_4 + self.se_list[3](s_4)
 
         block_5, s_5 = self.block(block_4, s_4, 4)
-        s_5 = s_5 + self.se_list[4](s_4)
+        s_5 = s_5 + self.se_list[4](s_5)
 
         for i in range(4):
             _size = block_5[i].size()
