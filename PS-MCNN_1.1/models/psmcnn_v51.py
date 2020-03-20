@@ -18,7 +18,7 @@ def conv_1x1_bn(inp, oup):
 
 def conv_3x3_bn_prelu(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-                         nn.BatchNorm2d(oup), nn.RReLU())
+                         nn.BatchNorm2d(oup), nn.PReLU())
 
 
 def conv_1x1_bn_prelu(inp, oup):
