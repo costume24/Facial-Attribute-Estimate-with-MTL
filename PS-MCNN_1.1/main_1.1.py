@@ -739,11 +739,11 @@ def validate(val_loader, model, criterion, writer, count, epoch):
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
             # 所有属性的平均准确率
-            if i == 0:
-                acc_for_each = correct_single
-            else:
-                acc_for_each = (acc_for_each + correct_single) / 2
-
+            # if i == 0:
+            #     acc_for_each = correct_single
+            # else:
+            #     acc_for_each = (acc_for_each + correct_single) / 2
+            acc_for_each += correct_single
             val_correct += torch.sum(pred == target, dtype=torch.float32).item(
             ) / 40.0  # num_classes need you to define
 
@@ -773,6 +773,7 @@ def validate(val_loader, model, criterion, writer, count, epoch):
                 mbAcc=mean_balance
             )
             bar.next()
+        acc_for_each /= val_total
     bar.finish()
     p = tp / (tp + fp)
     r = tp / (tp + fn)
