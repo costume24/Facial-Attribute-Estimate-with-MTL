@@ -773,7 +773,7 @@ def validate(val_loader, model, criterion, writer, count, epoch):
                 mbAcc=mean_balance
             )
             bar.next()
-        acc_for_each /= val_total
+        acc_for_each /= (i+1)
     bar.finish()
     p = tp / (tp + fp)
     r = tp / (tp + fn)
