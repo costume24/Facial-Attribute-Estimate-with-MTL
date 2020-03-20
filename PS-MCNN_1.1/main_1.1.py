@@ -115,8 +115,8 @@ parser.add_argument('-c',
 parser.add_argument('--pret',
                     default='',
                     type=str)
-parser.add_argument('--pres', default='./pretrained-s-2/spre.ckpt', type=str)
-parser.add_argument('--pre4t', default='./pretrained-t/model_best.pth.tar', type=str)
+parser.add_argument('--pres', default='', type=str)
+parser.add_argument('--pre4t', default='', type=str)
 # Miscs
 parser.add_argument('--manual-seed', type=int, help='manual seed')
 parser.add_argument('-e',
