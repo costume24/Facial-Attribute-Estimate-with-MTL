@@ -242,6 +242,9 @@ def main():
     elif args.version == 53:
         model = models.psmcnn_v53.psnet().to(device)
         title = args.set+'-psmcnn-53'
+    elif args.version == 54:
+        model = models.psmcnn_v54.psnet().to(device)
+        title = args.set+'-psmcnn-54'
         
     model = torch.nn.DataParallel(model)
     data_path = ''
