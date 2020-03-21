@@ -114,28 +114,28 @@ class psnet(nn.Module):
         self.output = []
         block_1, s_1 = self.block([input, input, input, input], input, 0)
         for i in range(4):
-            block_1[i] = block_1[i] + self.se_list[i][0](block_1[i])
+            block_1[i] = block_1[i] + self.se_list_t[i][0](block_1[i])
         s_1 = s_1 + self.se_list_s[0](s_1)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
         s_2 = s_2 + self.se_list_s[1](s_2)
         for i in range(4):
-            block_2[i] = block_2[i] + self.se_list[i][1](block_2[i])
+            block_2[i] = block_2[i] + self.se_list_t[i][1](block_2[i])
 
         block_3, s_3 = self.block(block_2, s_2, 2)
         s_3 = s_3 + self.se_list_s[2](s_3)
         for i in range(4):
-            block_3[i] = block_3[i] + self.se_list[i][2](block_3[i])
+            block_3[i] = block_3[i] + self.se_list_t[i][2](block_3[i])
 
         block_4, s_4 = self.block(block_3, s_3, 3)
         s_4 = s_4 + self.se_list_s[3](s_4)
         for i in range(4):
-            block_4[i] = block_4[i] + self.se_list[i][3](block_4[i])
+            block_4[i] = block_4[i] + self.se_list_t[i][3](block_4[i])
 
         block_5, s_5 = self.block(block_4, s_4, 4)
         s_5 = s_5 + self.se_list_s[4](s_5)
         for i in range(4):
-            block_5[i] = block_5[i] + self.se_list[i][4](block_5[i])
+            block_5[i] = block_5[i] + self.se_list_t[i][4](block_5[i])
 
         for i in range(4):
             _size = block_5[i].size()
