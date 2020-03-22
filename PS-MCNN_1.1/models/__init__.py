@@ -28,6 +28,7 @@ from models.psmcnn_v52 import *
 from models.psmcnn_v53 import *
 from models.psmcnn_v54 import *
 from models.psmcnn_v55 import *
+from models.psmcnn_v56 import *
 
 
 

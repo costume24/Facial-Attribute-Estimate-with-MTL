@@ -77,7 +77,7 @@ parser.add_argument('--step',
 parser.add_argument('--schedule',
                     type=int,
                     nargs='+',
-                    default=[10, 20, 30],
+                    default=[10, 25, 40],
                     help='decrease learning rate at these epochs.')
 parser.add_argument('--turning-point',
                     type=int,
@@ -248,6 +248,9 @@ def main():
     elif args.version == 55:
         model = models.psmcnn_v55.psnet().to(device)
         title = args.set+'-psmcnn-55'
+    elif args.version == 56:
+        model = models.psmcnn_v56.psnet().to(device)
+        title = args.set+'-psmcnn-56'
         
     model = torch.nn.DataParallel(model)
     data_path = ''
