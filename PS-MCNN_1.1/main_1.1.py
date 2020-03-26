@@ -38,7 +38,7 @@ parser.add_argument('-d',
                     '--data',
                     default='/root/OneDrive/DataSets/CelebA/Anno',
                     type=str)
-parser.add_argument('--set',default='c',type=str)
+parser.add_argument('--set',default='l',type=str)
 parser.add_argument('-j',
                     '--workers',
                     default=4,
@@ -98,10 +98,10 @@ parser.add_argument('--weight-decay',
                     type=float,
                     metavar='W',
                     help='weight decay (default: 1e-4)')
-parser.add_argument('--focal', default='yes', type=str)
+parser.add_argument('--focal', default='no', type=str)
 parser.add_argument('--use1x1', default=True, type=bool)
 parser.add_argument('--prob',default=0.5,type=float)
-parser.add_argument('--adaloss',default='no', type=str)
+parser.add_argument('--adaloss',default='yes', type=str)
 parser.add_argument('--prelu',default='yes',type=str)
 parser.add_argument('--order',default='old',type=str)
 parser.add_argument('--xav',default='no',type=str)
@@ -251,7 +251,7 @@ def main():
     elif args.version == 56:
         model = models.psmcnn_v56.psnet().to(device)
         title = args.set+'-psmcnn-56'
-        
+
     model = torch.nn.DataParallel(model)
     data_path = ''
     if args.set == 'c':
@@ -545,7 +545,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
     acc_for_each =  torch.zeros(40, device='cuda:0')
     # 计算平衡准确率
     balance = [0] * 40
-    weight = [1] * 40
+    weight = torch.ones(40)
+    weight.requires_grad = False
     stage = 0
     if args.adaloss == 'yes' and epoch >= 10:
         stage = 1
@@ -599,13 +600,12 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         fn = fn + conf[2]
         tp = tp + conf[3]
         # loss的加权
-        max_loss = max(loss_attr)
-        min_loss = min(loss_attr)
-        avg_loss = sum(loss_attr) / len(loss_attr)
-        for ii in range(40):
-            weight[ii] = math.exp(
-                (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
-
+        # max_loss = max(loss_attr)
+        # min_loss = min(loss_attr)
+        # avg_loss = sum(loss_attr) / len(loss_attr)
+        # for ii in range(40):
+        #     weight[ii] = math.exp(
+        #         (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
         compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
         # 计算平衡准确率
         balance_tmp = [0] * 40
@@ -637,7 +637,12 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
 
         loss.backward()
         optimizer.step()
-
+        if stage == 1:
+            new_loss = F.softmax(torch.tensor(loss_attr), dim=0)
+            min_loss = torch.min(new_loss)
+            max_loss = torch.max(new_loss)
+            mean_loss = torch.mean(new_loss)
+            weight = np.exp((new_loss-mean_loss)/(max_loss-min_loss))
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
@@ -664,6 +669,8 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         )
         bar.next()
     bar.finish()
+    if stage == 1:
+        print(weight)
     p = tp / (tp + fp)
     r = tp / (tp + fn)
     f2 = 5 * p * r / (4 * p + r)

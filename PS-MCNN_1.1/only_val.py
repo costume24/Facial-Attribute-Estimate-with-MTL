@@ -302,6 +302,7 @@ def main():
                     for j in state_dict.keys():
                         print(j)
                         break
+                    print(len(state_dict.keys()))
                     model_dict.update(state_dict)
                     model.load_state_dict(model_dict)
                 else:
