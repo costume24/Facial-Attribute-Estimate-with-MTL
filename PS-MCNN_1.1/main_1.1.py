@@ -600,12 +600,13 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         fn = fn + conf[2]
         tp = tp + conf[3]
         # loss的加权
-        # max_loss = max(loss_attr)
-        # min_loss = min(loss_attr)
-        # avg_loss = sum(loss_attr) / len(loss_attr)
-        # for ii in range(40):
-        #     weight[ii] = math.exp(
-        #         (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
+        if stage == 1:
+            max_loss = max(loss_attr)
+            min_loss = min(loss_attr)
+            avg_loss = sum(loss_attr) / len(loss_attr)
+            for ii in range(40):
+                weight[ii] = math.exp(
+                    (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
         compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
         # 计算平衡准确率
         balance_tmp = [0] * 40
@@ -637,12 +638,12 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
 
         loss.backward()
         optimizer.step()
-        if stage == 1:
-            new_loss = F.softmax(torch.tensor(loss_attr), dim=0)
-            min_loss = torch.min(new_loss)
-            max_loss = torch.max(new_loss)
-            mean_loss = torch.mean(new_loss)
-            weight = np.exp((new_loss-mean_loss)/(max_loss-min_loss))
+        # if stage == 1:
+        #     new_loss = F.softmax(torch.tensor(loss_attr), dim=0)
+        #     min_loss = torch.min(new_loss)
+        #     max_loss = torch.max(new_loss)
+        #     mean_loss = torch.mean(new_loss)
+        #     weight = np.exp((new_loss-mean_loss)/(max_loss-min_loss))
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
@@ -761,10 +762,6 @@ def validate(val_loader, model, criterion, writer, count, epoch):
             correct_single = torch.sum(pred == target, 0,
                                        dtype=torch.float32) / output.size(0)
             # 所有属性的平均准确率
-            # if i == 0:
-            #     acc_for_each = correct_single
-            # else:
-            #     acc_for_each = (acc_for_each + correct_single) / 2
             acc_for_each += correct_single
             val_correct += torch.sum(pred == target, dtype=torch.float32).item(
             ) / 40.0  # num_classes need you to define
