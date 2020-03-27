@@ -296,7 +296,7 @@ def main():
                                  args.lr,
                                  weight_decay=args.weight_decay)
     # optionally resume from a checkpoint
-    args.checkpoint = 'checkpoints_dual_v' + '_'.join([str(args.version), args.set,
+    args.checkpoint = 'checkpoints_arcsin_v' + '_'.join([str(args.version), args.set,
                                                  args.focal, args.adaloss,
                                                  str(args.epochs), str(args.train_batch),
                                                  '{:.0e}'.format(args.lr), str(args.lr_decay), args.prelu])
