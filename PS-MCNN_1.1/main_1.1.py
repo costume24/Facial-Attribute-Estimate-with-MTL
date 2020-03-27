@@ -635,9 +635,12 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
             max_loss = max(loss_attr)
             min_loss = min(loss_attr)
             avg_loss = sum(loss_attr) / len(loss_attr)
+            # for ii in range(40):
+            #     weight[ii] = math.exp(
+            #         (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
             for ii in range(40):
-                weight[ii] = math.exp(
-                    (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
+                weight[ii] = np.arcsin(
+                    (loss_attr[ii] - avg_loss) / (max_loss - min_loss)) + 1.5
         # if stage == 1:
         #     new_loss = F.softmax(torch.tensor(loss_attr), dim=0)
         #     min_loss = torch.min(new_loss)
