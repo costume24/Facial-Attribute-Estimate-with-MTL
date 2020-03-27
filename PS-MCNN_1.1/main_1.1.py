@@ -599,14 +599,6 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
         fp = fp + conf[1]
         fn = fn + conf[2]
         tp = tp + conf[3]
-        # loss的加权
-        if stage == 1:
-            max_loss = max(loss_attr)
-            min_loss = min(loss_attr)
-            avg_loss = sum(loss_attr) / len(loss_attr)
-            for ii in range(40):
-                weight[ii] = math.exp(
-                    (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
         compare_result= torch.sum(pred == target, 0, dtype=torch.float32)  # (?,40)
         # 计算平衡准确率
         balance_tmp = [0] * 40
@@ -638,6 +630,14 @@ def train(train_loader, model, criterion, optimizer, epoch, writer, count):
 
         loss.backward()
         optimizer.step()
+        # loss的加权
+        if stage == 1:
+            max_loss = max(loss_attr)
+            min_loss = min(loss_attr)
+            avg_loss = sum(loss_attr) / len(loss_attr)
+            for ii in range(40):
+                weight[ii] = math.exp(
+                    (loss_attr[ii] - avg_loss) / (max_loss - min_loss))
         # if stage == 1:
         #     new_loss = F.softmax(torch.tensor(loss_attr), dim=0)
         #     min_loss = torch.min(new_loss)
