@@ -51,7 +51,7 @@ class Block(nn.Module):
         self.scale = scale
         self.inp = inp
         self.r = self.inp//reduction
-        self.oup = self.oup
+        self.oup = oup
         self.pool = nn.MaxPool2d(2, 2)
         self.se = SELayer(oup)
         self.branch0 = BasicConv2d(self.inp, self.r, kernel_size=1, stride=1)
