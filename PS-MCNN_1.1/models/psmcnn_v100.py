@@ -147,6 +147,7 @@ class psnet(nn.Module):
                 Block(288, 512, reduction, scale),
                 Block(128, 128, reduction, scale)
             ])
+            self.iablock.append(tmp)
 
     def block(self, inp, s_0, ind):
         t_0, t_1, t_2, t_3 = inp
