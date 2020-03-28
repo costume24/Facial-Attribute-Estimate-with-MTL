@@ -67,7 +67,7 @@ class Block(nn.Module):
             BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1)
         )
 
-        self.conv2d = nn.Conv2d(self.r, self.oup, kernel_size=1, stride=1)
+        self.conv2d = nn.Conv2d(3*self.r, self.oup, kernel_size=1, stride=1)
         self.relu = nn.PReLU()
 
     def forward(self, x):
