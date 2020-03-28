@@ -45,7 +45,7 @@ class BasicConv2d(nn.Module):
 
 class Block(nn.Module):
 
-    def __init__(self, inp, reduction, scale1=1.0, scale2=1.0):
+    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0):
         super(Block, self).__init__()
 
         self.scale1 = scale1
