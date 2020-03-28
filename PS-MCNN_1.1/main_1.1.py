@@ -309,7 +309,7 @@ def main():
         str(args.version), args.set, args.focal, args.adaloss,
         str(args.epochs),
         str(args.train_batch), '{:.0e}'.format(args.lr),
-        str(args.lr_decay), args.r, args.scale1, args.scale2
+        str(args.lr_decay), str(args.r), str(args.scale1), str(args.scale2)
     ])
     if args.pres:
         args.checkpoint += '_s-pre'
