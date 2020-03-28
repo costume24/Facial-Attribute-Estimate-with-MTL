@@ -141,7 +141,7 @@ class psnet(nn.Module):
         self.iablock = nn.ModuleList()
         for _ in range(4):
             tmp = nn.ModuleList([
-                Block(64, 64, reduction, scale),
+                Block(32, 64, reduction, scale),
                 Block(96, 128, reduction, scale),
                 Block(160, 256, reduction, scale),
                 Block(288, 512, reduction, scale),
