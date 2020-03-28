@@ -105,6 +105,8 @@ parser.add_argument('--adaloss',default='yes', type=str)
 parser.add_argument('--prelu',default='yes',type=str)
 parser.add_argument('--order',default='old',type=str)
 parser.add_argument('--xav',default='no',type=str)
+parser.add_argument('r',default=4,type=int)
+parser.add_argument('scale',default=1.0,type=float)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -255,7 +257,7 @@ def main():
         model = models.psmcnn_v24.psnet().to(device)
         title = args.set+'-psmcnn-24'
     elif args.version == 100:
-        model = models.psmcnn_v100.psnet().to(device)
+        model = models.psmcnn_v100.psnet(reduction=args.r,scale=args.scale).to(device)
         title = args.set+'-psmcnn-100'
 
     model = torch.nn.DataParallel(model)
