@@ -4,6 +4,25 @@ import torch.nn as nn
 import os
 import sys
 
+def conv_3x3_bn(inp, oup, stride=1):
+    return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+                         nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
+
+def conv_1x1_bn(inp, oup):
+    return nn.Sequential(
+        nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+        nn.BatchNorm2d(oup),
+        nn.ReLU6(inplace=True)
+    )
+
+def conv_3x3_bn_prelu(inp, oup, stride=1):
+    return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+                         nn.BatchNorm2d(oup), nn.PReLU())
+
+
+def conv_1x1_bn_prelu(inp, oup):
+    return nn.Sequential(nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+                         nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
 
 class BasicConv2d(nn.Module):
 
@@ -78,7 +97,6 @@ class psnet(nn.Module):
         else:
             conv3 = conv_3x3_bn
             conv1 = conv_1x1_bn
-
         self.use_1x1 = use_1x1
         self.pool = nn.MaxPool2d(2, 2)
         self.s_conv = nn.ModuleList([
