@@ -38,18 +38,18 @@ class psnet(nn.Module):
         self.t_conv = nn.ModuleList([
             conv3(3, 32),
             conv3(64, 64),
-            conv3(96, 128),
-            conv3(160, 256),
-            conv3(288, 128)
+            conv3(128, 128),
+            conv3(256, 256),
+            conv3(512, 128)
         ])
 
         self.t_fc = nn.ModuleList([nn.Linear(3840, 1024), nn.Linear(1024, 512)])
         self.output = []  # (4,), 4个支路的输出
         self.conv_1x1 = nn.ModuleList([
             conv1(32, 64),
-            conv1(64, 96),
-            conv1(128, 160),
-            conv1(256, 288)
+            conv1(64, 128),
+            conv1(128, 256),
+            conv1(256, 512)
         ])
         self.group = nn.ModuleList([
             nn.Linear(512, 26),

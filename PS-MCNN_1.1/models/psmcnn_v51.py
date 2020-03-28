@@ -182,10 +182,10 @@ class psnet(nn.Module):
                 t_2_1x1 = self.tconv_1x1[2][ind](t_2)
                 t_3_1x1 = self.tconv_1x1[3][ind](t_3)
 
-                s_1x1_0 = self.sconv_3x3[0][ind](s_0)
-                s_1x1_1 = self.sconv_3x3[1][ind](s_0)
-                s_1x1_2 = self.sconv_3x3[2][ind](s_0)
-                s_1x1_3 = self.sconv_3x3[3][ind](s_0)
+                # s_1x1_0 = self.sconv_3x3[0][ind](s_0)
+                # s_1x1_1 = self.sconv_3x3[1][ind](s_0)
+                # s_1x1_2 = self.sconv_3x3[2][ind](s_0)
+                # s_1x1_3 = self.sconv_3x3[3][ind](s_0)
 
                 t_0 = torch.cat([t_0, s_1x1_0], 1)
                 t_1 = torch.cat([t_1, s_1x1_1], 1)
