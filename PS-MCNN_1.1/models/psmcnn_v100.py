@@ -88,6 +88,12 @@ class psnet(nn.Module):
             conv3(256, 256),
             conv3(384, 128)
         ])  # (5,),s支路的5个卷积层
+        self.t_conv = nn.ModuleList()
+        for _ in range(4):
+            tmp = nn.ModuleList([conv3(3,32),conv3(32,32)])
+            self.t_conv.append(tmp)
+        self.s_conv_1 = conv3(3,32)
+        self.s_conv_2 = conv3(32,32)
 
         self.t_fc = nn.ModuleList()  # (4,2)，每一行是一个t支路的2个FC层
         self.s_fc = nn.ModuleList([nn.Linear(3840, 512),
@@ -160,7 +166,17 @@ class psnet(nn.Module):
 
     def forward(self, input):
         self.output = []
-        block_1, s_1 = self.block([input, input, input, input], input, 0)
+        s_1 = self.s_conv_1(input)
+        s_1 = self.s_conv_2(s_1)
+        t1 = self.t_conv[0][0]
+        t1 = self.t_conv[0][1]
+        t2 = self.t_conv[1][0]
+        t2 = self.t_conv[1][1]        
+        t3 = self.t_conv[2][0]
+        t3 = self.t_conv[2][1]
+        t4 = self.t_conv[3][0]
+        t4 = self.t_conv[3][1]
+        block_1, s_1 = self.block([t1, t2, t3, t4], s_1, 0)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
 
