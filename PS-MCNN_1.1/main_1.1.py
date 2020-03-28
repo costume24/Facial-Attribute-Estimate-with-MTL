@@ -105,8 +105,8 @@ parser.add_argument('--adaloss',default='yes', type=str)
 parser.add_argument('--prelu',default='yes',type=str)
 parser.add_argument('--order',default='old',type=str)
 parser.add_argument('--xav',default='no',type=str)
-parser.add_argument('r',default=4,type=int)
-parser.add_argument('scale',default=1.0,type=float)
+parser.add_argument('--r',default=4,type=int)
+parser.add_argument('--scale',default=1.0,type=float)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
