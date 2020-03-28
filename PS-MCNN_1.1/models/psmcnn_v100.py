@@ -45,10 +45,11 @@ class BasicConv2d(nn.Module):
 
 class Block(nn.Module):
 
-    def __init__(self, inp, oup, reduction, scale=1.0):
+    def __init__(self, inp, reduction, scale1=1.0, scale2=1.0):
         super(Block, self).__init__()
 
-        self.scale = scale
+        self.scale1 = scale1
+        self.scale2 = scale2
         self.inp = inp
         self.r = self.inp//reduction
         self.oup = oup
@@ -67,7 +68,8 @@ class Block(nn.Module):
             BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1)
         )
 
-        self.conv2d = nn.Conv2d(3*self.r, self.oup, kernel_size=1, stride=1)
+        self.conv2d = nn.Conv2d(3*self.r, self.inp, kernel_size=1, stride=1)
+        self.conv1 = nn.Conv2d(self.inp, self.oup, kernel_size=1, stride=1)
         self.relu = nn.PReLU()
 
     def forward(self, x):
@@ -76,10 +78,11 @@ class Block(nn.Module):
         x2 = self.branch2(x)
         out = torch.cat((x0, x1, x2), 1)
         out = self.conv2d(out)
-        out = out * self.scale + x
+        out = out * self.scale1 + x
+        out = self.conv1(out)
         out = self.relu(out)
-        out = self.se(out) + out
         out = self.pool(out)
+        out = self.se(out) * self.scale2 + out
         return out
 
 
@@ -195,6 +198,11 @@ class psnet(nn.Module):
         t3 = self.t_conv[2][1](t3)
         t4 = self.t_conv[3][0](input)
         t4 = self.t_conv[3][1](t4)
+        t1 = torch.cat((t1,s_1),1)
+        t2 = torch.cat((t2,s_1),1)
+        t3 = torch.cat((t3,s_1),1)
+        t4 = torch.cat((t4,s_1),1)
+
         block_1, s_1 = self.block([t1, t2, t3, t4], s_1, 0)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
