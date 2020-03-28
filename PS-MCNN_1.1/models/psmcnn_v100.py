@@ -81,7 +81,7 @@ class Block(nn.Module):
 
 
 class psnet(nn.Module):
-    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0,scale2=1.0):
+    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0, scale2=1.0):
         super().__init__()
         if prelu == 'yes':
             conv3 = conv_3x3_bn_prelu
@@ -123,11 +123,11 @@ class psnet(nn.Module):
         self.iablock = nn.ModuleList()
         for _ in range(4):
             tmp = nn.ModuleList([
-                Block(32, 32, reduction, scale),
-                Block(64, 64, reduction, scale),
-                Block(96, 128, reduction, scale),
-                Block(160, 256, reduction, scale),
-                Block(288, 128, reduction, scale)
+                Block(32, 32, reduction, scale1, scale2),
+                Block(64, 64, reduction, scale1, scale2),
+                Block(96, 128, reduction, scale1, scale2),
+                Block(160, 256, reduction, scale1, scale2),
+                Block(288, 128, reduction, scale1, scale2)
             ])
             self.iablock.append(tmp)
 
