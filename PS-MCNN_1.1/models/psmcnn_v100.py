@@ -75,11 +75,11 @@ class Block(nn.Module):
         x1 = self.branch1(x)
         x2 = self.branch2(x)
         out = torch.cat((x0, x1, x2), 1)
-        out = self.pool(out)
         out = self.conv2d(out)
         out = out * self.scale + x
         out = self.relu(out)
         out = self.se(out) + out
+        out = self.pool(out)
         return out
 
 
