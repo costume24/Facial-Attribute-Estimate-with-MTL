@@ -187,14 +187,14 @@ class psnet(nn.Module):
         self.output = []
         s_1 = self.s_conv_1(input)
         s_1 = self.s_conv_2(s_1)
-        t1 = self.t_conv[0][0]
-        t1 = self.t_conv[0][1]
-        t2 = self.t_conv[1][0]
-        t2 = self.t_conv[1][1]        
-        t3 = self.t_conv[2][0]
-        t3 = self.t_conv[2][1]
-        t4 = self.t_conv[3][0]
-        t4 = self.t_conv[3][1]
+        t1 = self.t_conv[0][0](input)
+        t1 = self.t_conv[0][1](t1)
+        t2 = self.t_conv[1][0](input)
+        t2 = self.t_conv[1][1](t2)        
+        t3 = self.t_conv[2][0](input)
+        t3 = self.t_conv[2][1](t3)
+        t4 = self.t_conv[3][0](input)
+        t4 = self.t_conv[3][1](t4)
         block_1, s_1 = self.block([t1, t2, t3, t4], s_1, 0)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
