@@ -81,7 +81,7 @@ class Block(nn.Module):
 
 
 class psnet(nn.Module):
-    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale=1.0):
+    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0,scale2=1.0):
         super().__init__()
         if prelu == 'yes':
             conv3 = conv_3x3_bn_prelu

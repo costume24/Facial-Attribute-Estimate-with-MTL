@@ -106,7 +106,8 @@ parser.add_argument('--prelu',default='yes',type=str)
 parser.add_argument('--order',default='old',type=str)
 parser.add_argument('--xav',default='no',type=str)
 parser.add_argument('--r',default=4,type=int)
-parser.add_argument('--scale',default=1.0,type=float)
+parser.add_argument('--scale1',default=1.0,type=float)
+parser.add_argument('--scale2',default=1.0,type=float)
 # Checkpoints
 parser.add_argument('-c',
                     '--checkpoint',
@@ -257,7 +258,7 @@ def main():
         model = models.psmcnn_v24.psnet().to(device)
         title = args.set+'-psmcnn-24'
     elif args.version == 100:
-        model = models.psmcnn_v100.psnet(reduction=args.r,scale=args.scale).to(device)
+        model = models.psmcnn_v100.psnet(reduction=args.r,scale1=args.scale1,scale2=args.scale2).to(device)
         title = args.set+'-psmcnn-100'
 
     model = torch.nn.DataParallel(model)
@@ -304,10 +305,12 @@ def main():
                                  args.lr,
                                  weight_decay=args.weight_decay)
     # optionally resume from a checkpoint
-    args.checkpoint = 'checkpoints_arcsin_v' + '_'.join([str(args.version), args.set,
-                                                 args.focal, args.adaloss,
-                                                 str(args.epochs), str(args.train_batch),
-                                                 '{:.0e}'.format(args.lr), str(args.lr_decay), args.prelu])
+    args.checkpoint = 'checkpoints_ia_v' + '_'.join([
+        str(args.version), args.set, args.focal, args.adaloss,
+        str(args.epochs),
+        str(args.train_batch), '{:.0e}'.format(args.lr),
+        str(args.lr_decay), args.r, args.scale1, args.scale2
+    ])
     if args.pres:
         args.checkpoint += '_s-pre'
     if args.pret:
