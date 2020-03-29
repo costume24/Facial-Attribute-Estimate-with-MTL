@@ -45,7 +45,7 @@ class BasicConv2d(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True):
+    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy=False):
         super(Block, self).__init__()
 
         self.scale1 = scale1
@@ -54,19 +54,28 @@ class Block(nn.Module):
         self.r = self.inp // reduction
         self.oup = oup
         self.use_se = use_se
+        self.asy = asy
         if self.use_se:
             self.se = SELayer(oup)
         self.branch0 = BasicConv2d(self.inp, self.r, kernel_size=1, stride=1)
+        if self.asy:
+            self.branch1 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
+                                        BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
+                                        BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
 
-        self.branch1 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
-                                     BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
-                                     BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
+            self.branch2 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
+                                        BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
+                                        BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)),
+                                        BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
+                                        BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
+        else:
+            self.branch1 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
+                                        BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1),
+                                        BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1))
 
-        self.branch2 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
-                                     BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
-                                     BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)),
-                                     BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
-                                     BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
+            self.branch2 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
+                                        BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1),
+                                        BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1))
 
         self.conv2d = nn.Conv2d(3 * self.r, self.inp, kernel_size=1, stride=1)
         self.conv1 = nn.Conv2d(self.inp, self.oup, kernel_size=1, stride=1)
@@ -131,8 +140,8 @@ class psnet(nn.Module):
             tmp = nn.ModuleList([
                 Block(32, 32, reduction, scale1, scale2),
                 Block(64, 64, reduction, scale1, scale2),
-                Block(96, 128, reduction, scale1, scale2),
-                Block(160, 256, reduction, scale1, scale2),
+                Block(96, 128, reduction, scale1, scale2, asy=True),
+                Block(160, 256, reduction, scale1, scale2, asy=True),
                 Block(288, 128, reduction, scale1, scale2)
             ])
             self.iablock.append(tmp)
