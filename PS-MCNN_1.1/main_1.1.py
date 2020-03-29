@@ -318,6 +318,8 @@ def main():
     if args.pre4t:
         args.checkpoint += '_4t-pre'
     if not os.path.isdir(args.checkpoint):
+        if args.place == 'deepai':
+            args.checkpoint = '/var/www/nextcloud/data/dbc2017/files/' + args.checkpoint
         args.checkpoint = mkdir_p(args.checkpoint, 1)
 
     # resume work
