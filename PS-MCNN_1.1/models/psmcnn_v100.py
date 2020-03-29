@@ -45,7 +45,7 @@ class BasicConv2d(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0):
+    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True):
         super(Block, self).__init__()
 
         self.scale1 = scale1
@@ -53,15 +53,20 @@ class Block(nn.Module):
         self.inp = inp
         self.r = self.inp // reduction
         self.oup = oup
-        self.se = SELayer(oup)
+        self.use_se = use_se
+        if self.use_se:
+            self.se = SELayer(oup)
         self.branch0 = BasicConv2d(self.inp, self.r, kernel_size=1, stride=1)
 
         self.branch1 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
-                                     BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1))
+                                     BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
+                                     BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
 
         self.branch2 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
-                                     BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1),
-                                     BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1))
+                                     BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
+                                     BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)),
+                                     BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
+                                     BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
 
         self.conv2d = nn.Conv2d(3 * self.r, self.inp, kernel_size=1, stride=1)
         self.conv1 = nn.Conv2d(self.inp, self.oup, kernel_size=1, stride=1)
@@ -76,7 +81,8 @@ class Block(nn.Module):
         out = out * self.scale1 + x
         out = self.conv1(out)
         out = self.relu(out)
-        out = self.se(out) * self.scale2 + out
+        if self.use_se:
+            out = self.se(out) * self.scale2 + out
         return out
 
 
