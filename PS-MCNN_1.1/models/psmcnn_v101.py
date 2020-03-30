@@ -194,7 +194,7 @@ class psnet(nn.Module):
         t4 = self.t_conv[3][1](t4)
         s_1 = self.s_pre_1(input)
         s_1 = self.s_pre_2(s_1)
-        block_1, s_1 = self.block([t1, t2, t3, t4], s1, 0)
+        block_1, s_1 = self.block([t1, t2, t3, t4], s_1, 0)
 
         block_2, s_2 = self.block(block_1, s_1, 1)
 
