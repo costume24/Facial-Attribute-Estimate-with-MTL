@@ -108,11 +108,7 @@ class psnet(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.s_pre_1 = conv3(3,32)
         self.s_pre_2 = conv3(32,32)
-        self.s_conv = nn.ModuleList([conv3(32, 32),
-                                     conv3(160, 64),
-                                     conv3(192, 128),
-                                     conv3(256, 256),
-                                     conv3(384, 128)])  # (5,),s支路的5个卷积层
+
         self.t_conv = nn.ModuleList()
         for _ in range(4):
             tmp = nn.ModuleList([conv3(3, 32), conv3(32, 32)])
@@ -137,30 +133,37 @@ class psnet(nn.Module):
             [nn.Linear(1024, 26), nn.Linear(1024, 12),
              nn.Linear(1024, 18), nn.Linear(1024, 24)])
 
-        self.iablock = nn.ModuleList()
+        self.iablock_s = nn.ModuleList([
+            Block(32, 32, reduction, scale1, scale2),
+            Block(160, 64, reduction, scale1, scale2),
+            Block(192, 128, reduction, scale1, scale2, asy=True),
+            Block(256, 256, reduction, scale1, scale2, asy=True),
+            Block(384, 128, reduction, scale1, scale2)
+        ])
+
+        self.iablock_t = nn.ModuleList()
         for _ in range(4):
             tmp = nn.ModuleList([
                 Block(32, 32, reduction, scale1, scale2),
-                Block(160, 64, reduction, scale1, scale2),
-                Block(192, 128, reduction, scale1, scale2, asy=True),
-                Block(256, 256, reduction, scale1, scale2, asy=True),
-                Block(384, 128, reduction, scale1, scale2)
+                Block(64, 64, reduction, scale1, scale2),
+                Block(96, 128, reduction, scale1, scale2, asy=True),
+                Block(160, 256, reduction, scale1, scale2, asy=True),
+                Block(288, 128, reduction, scale1, scale2)
             ])
-            self.iablock.append(tmp)
-
+            self.iablock_t.append(tmp)
     def block(self, inp, s_0, ind):
         t_0, t_1, t_2, t_3 = inp
-        t_0 = self.iablock[0][ind](t_0)
-        t_1 = self.iablock[1][ind](t_1)
-        t_2 = self.iablock[2][ind](t_2)
-        t_3 = self.iablock[3][ind](t_3)
+        t_0 = self.iablock_t[0][ind](t_0)
+        t_1 = self.iablock_t[1][ind](t_1)
+        t_2 = self.iablock_t[2][ind](t_2)
+        t_3 = self.iablock_t[3][ind](t_3)
 
         t_0 = self.pool(t_0)
         t_1 = self.pool(t_1)
         t_2 = self.pool(t_2)
         t_3 = self.pool(t_3)
 
-        s_0 = self.s_conv[ind](s_0)
+        s_0 = self.iablock_s[ind](s_0)
         s_0 = self.pool(s_0)
 
         if ind < 4:
