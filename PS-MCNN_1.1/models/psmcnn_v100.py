@@ -57,7 +57,7 @@ class Block(nn.Module):
         self.asy = asy
         if self.use_se:
             self.se = SELayer(oup)
-        self.branch0 = BasicConv2d(self.inp, self.r, kernel_size=1, stride=1)
+        # self.branch0 = BasicConv2d(self.inp, self.r, kernel_size=1, stride=1)
         if self.asy:
             self.branch1 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
                                         BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
@@ -77,15 +77,15 @@ class Block(nn.Module):
                                         BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1),
                                         BasicConv2d(self.r, self.r, kernel_size=3, stride=1, padding=1))
 
-        self.conv2d = nn.Conv2d(3 * self.r, self.inp, kernel_size=1, stride=1)
+        self.conv2d = nn.Conv2d(2 * self.r, self.inp, kernel_size=1, stride=1)
         self.conv1 = nn.Conv2d(self.inp, self.oup, kernel_size=1, stride=1)
         self.relu = nn.PReLU()
 
     def forward(self, x):
-        x0 = self.branch0(x)
+        # x0 = self.branch0(x)
         x1 = self.branch1(x)
         x2 = self.branch2(x)
-        out = torch.cat((x0, x1, x2), 1)
+        out = torch.cat((x1, x2), 1)
         out = self.conv2d(out)
         out = out * self.scale1 + x
         out = self.conv1(out)
