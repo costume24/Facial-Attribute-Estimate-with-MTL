@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import os
 import sys
-from cbam import *
+from .cbam import *
 
 def conv_3x3_bn(inp, oup, stride=1):
     return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False), nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
