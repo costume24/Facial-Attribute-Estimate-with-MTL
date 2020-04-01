@@ -45,7 +45,7 @@ class BasicConv2d(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy=False):
+    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy='no'):
         super(Block, self).__init__()
 
         self.scale1 = scale1
@@ -58,7 +58,7 @@ class Block(nn.Module):
         if self.use_se:
             self.se = SELayer(oup)
         self.branch0 = BasicConv2d(self.inp, self.r, kernel_size=1, stride=1)
-        if self.asy:
+        if self.asy=='yes':
             self.branch1 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
                                         BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
                                         BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
@@ -96,7 +96,7 @@ class Block(nn.Module):
 
 
 class psnet(nn.Module):
-    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0, scale2=1.0):
+    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0, scale2=1.0, asy='no'):
         super().__init__()
         if prelu == 'yes':
             conv3 = conv_3x3_bn_prelu
@@ -108,7 +108,7 @@ class psnet(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.s_pre_1 = conv3(3,32)
         self.s_pre_2 = conv3(32,32)
-
+        self.asy = asy
         self.t_conv = nn.ModuleList()
         for _ in range(4):
             tmp = nn.ModuleList([conv3(3, 32), conv3(32, 32)])
@@ -136,8 +136,8 @@ class psnet(nn.Module):
         self.iablock_s = nn.ModuleList([
             Block(32, 32, reduction, scale1, scale2),
             Block(160, 64, reduction, scale1, scale2),
-            Block(192, 128, reduction, scale1, scale2, asy=True),
-            Block(256, 256, reduction, scale1, scale2, asy=True),
+            Block(192, 128, reduction, scale1, scale2, asy=self.asy),
+            Block(256, 256, reduction, scale1, scale2, asy=self.asy),
             Block(384, 128, reduction, scale1, scale2)
         ])
 
@@ -146,8 +146,8 @@ class psnet(nn.Module):
             tmp = nn.ModuleList([
                 Block(32, 32, reduction, scale1, scale2),
                 Block(64, 64, reduction, scale1, scale2),
-                Block(96, 128, reduction, scale1, scale2, asy=True),
-                Block(160, 256, reduction, scale1, scale2, asy=True),
+                Block(96, 128, reduction, scale1, scale2, asy=self.asy),
+                Block(160, 256, reduction, scale1, scale2, asy=self.asy),
                 Block(288, 128, reduction, scale1, scale2)
             ])
             self.iablock_t.append(tmp)

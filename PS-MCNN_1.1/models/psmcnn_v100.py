@@ -45,7 +45,7 @@ class BasicConv2d(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy='yes'):
+    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy='no'):
         super(Block, self).__init__()
 
         self.scale1 = scale1
@@ -96,7 +96,7 @@ class Block(nn.Module):
 
 
 class psnet(nn.Module):
-    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0, scale2=1.0):
+    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0, scale2=1.0, asy='no'):
         super().__init__()
         if prelu == 'yes':
             conv3 = conv_3x3_bn_prelu
@@ -105,6 +105,7 @@ class psnet(nn.Module):
             conv3 = conv_3x3_bn
             conv1 = conv_1x1_bn
         self.use_1x1 = use_1x1
+        self.asy = asy
         self.pool = nn.MaxPool2d(2, 2)
         self.s_conv = nn.ModuleList([conv3(3, 32),
                                      conv3(160, 64),
@@ -140,8 +141,8 @@ class psnet(nn.Module):
             tmp = nn.ModuleList([
                 Block(32, 32, reduction, scale1, scale2),
                 Block(64, 64, reduction, scale1, scale2),
-                Block(96, 128, reduction, scale1, scale2, asy=True),
-                Block(160, 256, reduction, scale1, scale2, asy=True),
+                Block(96, 128, reduction, scale1, scale2, asy=self.asy),
+                Block(160, 256, reduction, scale1, scale2, asy=self.asy),
                 Block(288, 128, reduction, scale1, scale2)
             ])
             self.iablock.append(tmp)
