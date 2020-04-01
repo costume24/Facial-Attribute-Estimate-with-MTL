@@ -259,7 +259,7 @@ def main():
         model = models.psmcnn_v24.psnet().to(device)
         title = args.set+'-psmcnn-24'
     elif args.version == 100:
-        model = models.psmcnn_v100.psnet(reduction=args.r,scale1=args.scale1,scale2=args.scale2).to(device)
+        model = models.psmcnn_v100.psnet(reduction=args.r,scale1=args.scale1,scale2=args.scale2,asy=args.useasy).to(device)
         title = args.set+'-psmcnn-100'
     elif args.version == 101:
         model = models.psmcnn_v101.psnet(reduction=args.r,scale1=args.scale1,scale2=args.scale2,asy=args.useasy).to(device)
