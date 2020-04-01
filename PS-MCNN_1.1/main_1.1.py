@@ -268,8 +268,8 @@ def main():
         model = models.psmcnn_v102.psnet(reduction=args.r,scale1=args.scale1,scale2=args.scale2,asy=args.useasy).to(device)
         title = args.set+'-psmcnn-102'
     elif args.version == 103:
-    model = models.psmcnn_v103.psnet(reduction=args.r,scale1=args.scale1,scale2=args.scale2,asy=args.useasy).to(device)
-    title = args.set+'-psmcnn-103'
+        model = models.psmcnn_v103.psnet(reduction=args.r,scale1=args.scale1,scale2=args.scale2,asy=args.useasy).to(device)
+        title = args.set+'-psmcnn-103'
 
     model = torch.nn.DataParallel(model)
     data_path = ''
