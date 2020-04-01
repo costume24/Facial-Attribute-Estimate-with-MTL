@@ -45,7 +45,7 @@ class BasicConv2d(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy=False):
+    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy='yes'):
         super(Block, self).__init__()
 
         self.scale1 = scale1
@@ -58,7 +58,7 @@ class Block(nn.Module):
         if self.use_se:
             self.se = SELayer(oup)
         self.branch0 = BasicConv2d(self.inp, self.r, kernel_size=1, stride=1)
-        if self.asy:
+        if self.asy == 'yes':
             self.branch1 = nn.Sequential(BasicConv2d(self.inp, self.r, kernel_size=1, stride=1),
                                         BasicConv2d(self.r, self.r, kernel_size=(1,3), stride=1, padding=(0,1)),
                                         BasicConv2d(self.r, self.r, kernel_size=(3,1), stride=1, padding=(1,0)))
