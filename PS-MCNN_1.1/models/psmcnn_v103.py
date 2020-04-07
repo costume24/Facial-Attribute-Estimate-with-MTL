@@ -101,7 +101,7 @@ class Block(nn.Module):
 
 
 class psnet(nn.Module):
-    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0, scale2=1.0, asy='no'):
+    def __init__(self, use_1x1=True, prelu='no', reduction=4, scale1=1.0, scale2=1.0, asy='no',learn='no'):
         super().__init__()
         if prelu == 'yes':
             conv3 = conv_3x3_bn_prelu
@@ -139,21 +139,21 @@ class psnet(nn.Module):
              nn.Linear(1024, 18), nn.Linear(1024, 24)])
 
         self.iablock_s = nn.ModuleList([
-            Block(32, 32, reduction, scale1, scale2),
-            Block(160, 64, reduction, scale1, scale2),
-            Block(192, 128, reduction, scale1, scale2, asy=self.asy),
-            Block(256, 256, reduction, scale1, scale2, asy=self.asy),
-            Block(384, 128, reduction, scale1, scale2)
+            Block(32, 32, reduction, scale1, scale2, learn),
+            Block(160, 64, reduction, scale1, scale2, learn),
+            Block(192, 128, reduction, scale1, scale2, asy=self.asy, learn),
+            Block(256, 256, reduction, scale1, scale2, asy=self.asy, learn),
+            Block(384, 128, reduction, scale1, scale2, learn)
         ])
 
         self.iablock_t = nn.ModuleList()
         for _ in range(4):
             tmp = nn.ModuleList([
-                Block(32, 32, reduction, scale1, scale2),
-                Block(64, 64, reduction, scale1, scale2),
-                Block(96, 128, reduction, scale1, scale2, asy=self.asy),
-                Block(160, 256, reduction, scale1, scale2, asy=self.asy),
-                Block(288, 128, reduction, scale1, scale2)
+                Block(32, 32, reduction, scale1, scale2, learn),
+                Block(64, 64, reduction, scale1, scale2, learn),
+                Block(96, 128, reduction, scale1, scale2, asy=self.asy, learn),
+                Block(160, 256, reduction, scale1, scale2, asy=self.asy, learn),
+                Block(288, 128, reduction, scale1, scale2, learn)
             ])
             self.iablock_t.append(tmp)
     def block(self, inp, s_0, ind):
