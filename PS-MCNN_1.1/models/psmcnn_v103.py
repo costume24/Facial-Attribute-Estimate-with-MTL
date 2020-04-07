@@ -45,11 +45,16 @@ class BasicConv2d(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy='no'):
+    def __init__(self, inp, oup, reduction, scale1=1.0, scale2=1.0, use_se=True,asy='no',learn='no'):
         super(Block, self).__init__()
-
-        self.scale1 = scale1
-        self.scale2 = scale2
+        if learn == 'no':
+            self.scale1 = scale1
+            self.scale2 = scale2
+        else:
+            self.scale1 = torch.torch.nn.Parameter(torch.FloatTensor(1), requires_grad=True)
+            self.scale2 = torch.torch.nn.Parameter(torch.FloatTensor(1), requires_grad=True)
+            self.scale1.data.fill_(1.0)
+            self.scale2.data.fill_(1.0)
         self.inp = inp
         self.r = self.inp // reduction
         self.oup = oup
