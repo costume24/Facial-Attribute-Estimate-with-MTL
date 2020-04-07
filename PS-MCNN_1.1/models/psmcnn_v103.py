@@ -53,8 +53,8 @@ class Block(nn.Module):
         else:
             self.scale1 = torch.torch.nn.Parameter(torch.FloatTensor(1), requires_grad=True)
             self.scale2 = torch.torch.nn.Parameter(torch.FloatTensor(1), requires_grad=True)
-            self.scale1.data.fill_(1.0)
-            self.scale2.data.fill_(1.0)
+            self.scale1.data.fill_(scale1)
+            self.scale2.data.fill_(scale2)
         self.inp = inp
         self.r = self.inp // reduction
         self.oup = oup
