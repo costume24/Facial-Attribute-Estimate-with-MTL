@@ -141,8 +141,8 @@ class psnet(nn.Module):
         self.iablock_s = nn.ModuleList([
             Block(32, 32, reduction, scale1, scale2, learn),
             Block(160, 64, reduction, scale1, scale2, learn),
-            Block(192, 128, reduction, scale1, scale2, asy=self.asy, learn),
-            Block(256, 256, reduction, scale1, scale2, asy=self.asy, learn),
+            Block(192, 128, reduction, scale1, scale2, asy=self.asy, learn=learn),
+            Block(256, 256, reduction, scale1, scale2, asy=self.asy, learn=learn),
             Block(384, 128, reduction, scale1, scale2, learn)
         ])
 
@@ -151,8 +151,8 @@ class psnet(nn.Module):
             tmp = nn.ModuleList([
                 Block(32, 32, reduction, scale1, scale2, learn),
                 Block(64, 64, reduction, scale1, scale2, learn),
-                Block(96, 128, reduction, scale1, scale2, asy=self.asy, learn),
-                Block(160, 256, reduction, scale1, scale2, asy=self.asy, learn),
+                Block(96, 128, reduction, scale1, scale2, asy=self.asy, learn=learn),
+                Block(160, 256, reduction, scale1, scale2, asy=self.asy, learn=learn),
                 Block(288, 128, reduction, scale1, scale2, learn)
             ])
             self.iablock_t.append(tmp)
