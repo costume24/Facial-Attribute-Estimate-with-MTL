@@ -34,6 +34,7 @@ from models.psmcnn_v100 import *
 from models.psmcnn_v101 import *
 from models.psmcnn_v102 import *
 from models.psmcnn_v103 import *
+from models.psmcnn_v203 import *
 
 
 
